@@ -89,24 +89,6 @@ function CreateViewIcon(props: IconProps) {
   );
 }
 
-function PermissionIcon(props: IconProps) {
-  return (
-    <svg
-      aria-hidden="true"
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="1.8"
-      viewBox="0 0 24 24"
-      {...props}
-    >
-      <path d="M12 3 4 7v6c0 4.5 3 7.8 8 8 5-0.2 8-3.5 8-8V7l-8-4Z" />
-      <path d="m9.5 12 1.8 1.8L15 10" />
-    </svg>
-  );
-}
-
 function LogoutIcon(props: IconProps) {
   return (
     <svg
@@ -145,11 +127,6 @@ const navigationItems: NavigationItem[] = [
     href: "/owner/views",
     label: "Quản lý view",
     Icon: ViewIcon,
-  },
-  {
-    href: "/owner/permissions",
-    label: "Phân quyền",
-    Icon: PermissionIcon,
   },
 ];
 

@@ -1,35 +1,25 @@
 "use client";
 
+/* eslint-disable react-hooks/set-state-in-effect */
+
 import ViewerShell from "@/src/components/layouts/viewer-shell";
-import ViewerTable from "@/src/components/viewer/viewer-table";
+import SharedViewRender, {
+  type ReloadMode,
+} from "@/src/components/viewer/shared-view-render";
 import { usePublishedView } from "@/src/hooks/viewer/use-published-view";
 import { ViewBySlugError } from "@/src/services/view.service";
 import type { ThemePreset, ViewJsonObject } from "@/src/types/view";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type PublishedViewPageProps = {
   slug: string;
   shareToken?: string;
 };
 
-const themeOptions: Array<{
-  value: ThemePreset;
-  label: string;
-}> = [
-  {
-    value: "modern",
-    label: "Modern",
-  },
-  {
-    value: "classic",
-    label: "Classic",
-  },
-  {
-    value: "minimal",
-    label: "Minimal",
-  },
-];
+const MIN_REFRESH_INTERVAL_SECONDS = 10;
+const DEFAULT_INTERVAL_SECONDS = 10;
+const INTERVAL_OPTIONS_SECONDS = [10, 30, 60, 120];
 
 function isThemePreset(value: unknown): value is ThemePreset {
   return value === "modern" || value === "classic" || value === "minimal";
@@ -95,16 +85,6 @@ function LoadingState() {
   );
 }
 
-function EmptyState() {
-  return (
-    <div className="rounded-lg border border-dashed border-slate-200 bg-white px-6 py-16 text-center shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
-      <p className="text-xl font-bold text-slate-900">
-        Chưa có dữ liệu để hiển thị
-      </p>
-    </div>
-  );
-}
-
 function ErrorState({ status }: { status?: number }) {
   const title =
     status === 403
@@ -130,12 +110,95 @@ function ErrorState({ status }: { status?: number }) {
   );
 }
 
+function getStorageKeys(slug: string) {
+  return {
+    mode: `sheet2web:view:${slug}:reload-mode`,
+    interval: `sheet2web:view:${slug}:reload-interval`,
+  };
+}
+
 export default function PublishedViewPage({
   slug,
   shareToken,
 }: PublishedViewPageProps) {
   const publishedViewQuery = usePublishedView(slug, shareToken);
+  const { refetch } = publishedViewQuery;
   const [selectedTheme, setSelectedTheme] = useState<ThemePreset | null>(null);
+  const [reloadMode, setReloadMode] = useState<ReloadMode>("manual");
+  const [reloadIntervalSeconds, setReloadIntervalSeconds] = useState(
+    DEFAULT_INTERVAL_SECONDS,
+  );
+  const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const keys = getStorageKeys(slug);
+    const storedMode = window.localStorage.getItem(keys.mode);
+    const storedInterval = Number(window.localStorage.getItem(keys.interval));
+
+    if (storedMode === "manual" || storedMode === "auto") {
+      setReloadMode(storedMode);
+    }
+
+    if (
+      Number.isFinite(storedInterval) &&
+      storedInterval >= MIN_REFRESH_INTERVAL_SECONDS
+    ) {
+      setReloadIntervalSeconds(storedInterval);
+    }
+  }, [slug]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const keys = getStorageKeys(slug);
+    window.localStorage.setItem(keys.mode, reloadMode);
+  }, [reloadMode, slug]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const keys = getStorageKeys(slug);
+    window.localStorage.setItem(keys.interval, String(reloadIntervalSeconds));
+  }, [reloadIntervalSeconds, slug]);
+
+  const safeInterval = useMemo(
+    () => Math.max(MIN_REFRESH_INTERVAL_SECONDS, reloadIntervalSeconds),
+    [reloadIntervalSeconds],
+  );
+
+  useEffect(() => {
+    if (reloadMode !== "auto") {
+      setRemainingSeconds(null);
+      return;
+    }
+
+    setRemainingSeconds(safeInterval);
+
+    const timer = window.setInterval(() => {
+      setRemainingSeconds((previous) => {
+        const nextValue = (previous ?? safeInterval) - 1;
+
+        if (nextValue <= 0) {
+          void refetch();
+          return safeInterval;
+        }
+
+        return nextValue;
+      });
+    }, 1_000);
+
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, [refetch, reloadMode, safeInterval]);
 
   if (publishedViewQuery.isPending) {
     return <LoadingState />;
@@ -150,61 +213,34 @@ export default function PublishedViewPage({
   const activeTheme = view.allowThemeSwitch
     ? selectedTheme ?? ownerTheme
     : ownerTheme;
-  const hasRows = Boolean(snapshot?.rows.length);
 
   return (
     <ViewerShell>
-      <div className="space-y-6">
-        <header className="rounded-lg border border-slate-200 bg-white p-6 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div className="min-w-0">
-              <h1 className="break-words text-3xl font-bold text-slate-900">
-                {view.name}
-              </h1>
-              <div className="mt-3 flex flex-wrap items-center gap-3 text-sm font-semibold text-slate-500">
-                <span>{snapshot?.rowCount ?? 0} dòng</span>
-                <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
-                <span>
-                  Cập nhật {formatDateTime(snapshot?.fetchedAt ?? view.lastPublishedAt)}
-                </span>
-              </div>
-            </div>
-
-            {view.allowThemeSwitch ? (
-              <div className="flex shrink-0 rounded-md border border-slate-200 bg-slate-50 p-1">
-                {themeOptions.map((theme) => {
-                  const active = theme.value === activeTheme;
-
-                  return (
-                    <button
-                      className={`h-9 rounded px-3 text-sm font-bold transition-colors ${
-                        active
-                          ? "bg-white text-blue-900 shadow-sm"
-                          : "text-slate-500 hover:text-slate-900"
-                      }`}
-                      key={theme.value}
-                      onClick={() => setSelectedTheme(theme.value)}
-                      type="button"
-                    >
-                      {theme.label}
-                    </button>
-                  );
-                })}
-              </div>
-            ) : null}
-          </div>
-        </header>
-
-        {!snapshot || !hasRows ? (
-          <EmptyState />
-        ) : (
-          <ViewerTable
-            headers={snapshot.headers}
-            rows={snapshot.rows}
-            themePreset={activeTheme}
-          />
-        )}
-      </div>
+      <SharedViewRender
+        allowThemeSwitch={view.allowThemeSwitch}
+        emptyTitle="Chưa có dữ liệu để hiển thị"
+        headers={snapshot?.headers ?? []}
+        intervalOptionsSeconds={INTERVAL_OPTIONS_SECONDS}
+        intervalSeconds={safeInterval}
+        isReloading={publishedViewQuery.isFetching}
+        onIntervalSecondsChange={(seconds) =>
+          setReloadIntervalSeconds(
+            Math.max(MIN_REFRESH_INTERVAL_SECONDS, Number(seconds) || 10),
+          )
+        }
+        onReload={() => {
+          void refetch();
+        }}
+        onReloadModeChange={setReloadMode}
+        onThemeChange={setSelectedTheme}
+        reloadMode={reloadMode}
+        remainingSeconds={remainingSeconds}
+        rowCount={snapshot?.rowCount ?? 0}
+        rows={snapshot?.rows ?? []}
+        themePreset={activeTheme}
+        title={view.name}
+        updatedAtLabel={formatDateTime(snapshot?.fetchedAt ?? view.lastPublishedAt)}
+      />
     </ViewerShell>
   );
 }

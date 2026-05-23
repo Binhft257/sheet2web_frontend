@@ -7,6 +7,7 @@ export type DataSourceStatusFilter = "active" | "error" | "disconnected";
 export type DataSource = {
   id: string;
   title: string;
+  sourceUrl?: string | null;
   sourceType: DataSourceType;
   sourceStatus: DataSourceStatus;
   spreadsheetId: string | null;
@@ -28,6 +29,11 @@ export type GetDataSourcesParams = {
 
 export type CreateDataSourceBody = {
   sourceUrl: string;
+  title?: string;
+};
+
+export type UpdateDataSourceBody = {
+  sourceUrl?: string;
   title?: string;
 };
 
@@ -73,4 +79,16 @@ export type DataSourcePreview = {
   rows: string[][];
   rowCount: number;
   previewedAt: string;
+};
+
+export type UpdateDataSourceResponse = Pick<
+  DataSource,
+  "id" | "title" | "sourceType" | "sourceStatus" | "spreadsheetId"
+> & {
+  sheets: DataSourceSheet[];
+};
+
+export type DeleteDataSourceResponse = {
+  id: string;
+  deletedAt: string;
 };

@@ -3,14 +3,17 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   createDataSource,
+  deleteDataSource,
   getDataSourceSheets,
   getDataSources,
   previewDataSource,
+  updateDataSource,
 } from "@/src/services/data-source.service";
 import type {
   CreateDataSourceBody,
   GetDataSourcesParams,
   PreviewDataSourceBody,
+  UpdateDataSourceBody,
 } from "@/src/types/data-source";
 
 const DEFAULT_PAGE = 1;
@@ -54,5 +57,18 @@ export function usePreviewDataSource(id: string | null) {
   return useMutation({
     mutationFn: (body: PreviewDataSourceBody) =>
       previewDataSource(id ?? "", body),
+  });
+}
+
+export function useUpdateDataSource() {
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: UpdateDataSourceBody }) =>
+      updateDataSource(id, body),
+  });
+}
+
+export function useDeleteDataSource() {
+  return useMutation({
+    mutationFn: (id: string) => deleteDataSource(id),
   });
 }

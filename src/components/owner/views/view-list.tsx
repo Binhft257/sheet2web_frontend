@@ -6,7 +6,6 @@ import {
   createShareToken,
   getShareTokens,
   getViewPermissions,
-  publishView,
   removeViewPermission,
   revokeShareToken,
 } from "@/src/services/view.service";
@@ -27,11 +26,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ChangeEvent, FormEvent, SVGProps } from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 
 const VIEWS_LIMIT = 10;
-const AUTO_PUBLISH_CHECK_INTERVAL_MS = 1_000;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const SECONDARY_VIEW_ACTION_CLASS =
+  "inline-flex h-10 w-24 items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50";
+const PRIMARY_VIEW_ACTION_CLASS =
+  "inline-flex h-10 w-24 items-center justify-center whitespace-nowrap rounded-md border border-blue-700 bg-blue-700 text-sm font-bold text-white transition-colors hover:border-blue-800 hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60";
 
 type ToastMessage = {
   type: "success" | "error";
@@ -153,38 +155,6 @@ function formatDateTime(dateTime: string | null | undefined) {
 
 function isPublishedView(view: OwnerView) {
   return view.status.toLowerCase() === "published";
-}
-
-function isAutoPublishEnabled(view: OwnerView) {
-  return view.settingsJson?.autoPublishEnabled === true;
-}
-
-function getRefreshLabel(
-  view: Pick<OwnerView, "refreshIntervalSeconds" | "settingsJson">,
-) {
-  return view.settingsJson?.autoPublishEnabled === true
-    ? `${view.refreshIntervalSeconds} giây`
-    : "Thủ công";
-}
-
-function getIntervalMs(view: OwnerView) {
-  const intervalSeconds = Number(view.refreshIntervalSeconds);
-
-  if (!Number.isFinite(intervalSeconds) || intervalSeconds <= 0) {
-    return null;
-  }
-
-  return intervalSeconds * 1_000;
-}
-
-function getLastPublishedTime(view: OwnerView) {
-  const publishedAt = view.lastPublishedAt ?? view.currentSnapshot?.fetchedAt;
-  if (!publishedAt) {
-    return 0;
-  }
-
-  const timestamp = new Date(publishedAt).getTime();
-  return Number.isFinite(timestamp) ? timestamp : 0;
 }
 
 function isThemePreset(value: unknown): value is ThemePreset {
@@ -409,7 +379,6 @@ function DetailModal({
         ["Nguồn dữ liệu", view.dataSource?.title ?? "—"],
         ["Sheet", view.sourceSheet?.sheetName ?? "—"],
         ["Dòng đầu làm header", view.useFirstRowAsHeader ? "Có" : "Không"],
-        ["Refresh", getRefreshLabel(view)],
         ["Cho đổi theme", view.allowThemeSwitch ? "Có" : "Không"],
         ["Theme preset", getThemePreset(view.themeOverrideJson)],
         [
@@ -724,15 +693,6 @@ function SharingModal({
                 <p className="mt-2 break-all text-sm font-semibold text-slate-900">
                   {getPublishedUrl(activeView)}
                 </p>
-                <button
-                  className="mt-3 inline-flex h-10 items-center justify-center rounded-md border border-blue-700 bg-blue-700 px-4 text-sm font-bold text-white transition-colors hover:border-blue-800 hover:bg-blue-800"
-                  onClick={() =>
-                    handleCopyModalLink(getPublishedUrl(activeView) ?? "")
-                  }
-                  type="button"
-                >
-                  Copy link public
-                </button>
               </div>
             </div>
           ) : activeTab === "permissions" ? (
@@ -959,8 +919,6 @@ export default function ViewList() {
   const [toastMessage, setToastMessage] = useState<ToastMessage | null>(null);
   const [detailViewId, setDetailViewId] = useState<string | null>(null);
   const [sharingView, setSharingView] = useState<OwnerView | null>(null);
-  const autoPublishInFlightRef = useRef<Set<string>>(new Set());
-  const lastAutoPublishAttemptRef = useRef<Map<string, number>>(new Map());
 
   const viewsQuery = useViews({
     page,
@@ -986,52 +944,6 @@ export default function ViewList() {
     () => Boolean(search.trim() || statusFilter || accessModeFilter),
     [accessModeFilter, search, statusFilter],
   );
-
-  useEffect(() => {
-    if (!viewsQuery.isSuccess || views.length === 0) {
-      return;
-    }
-
-    const intervalId = window.setInterval(() => {
-      const now = Date.now();
-
-      for (const view of views) {
-        if (!isPublishedView(view) || !isAutoPublishEnabled(view)) {
-          continue;
-        }
-
-        const intervalMs = getIntervalMs(view);
-        if (!intervalMs || autoPublishInFlightRef.current.has(view.id)) {
-          continue;
-        }
-
-        const lastPublishedTime = getLastPublishedTime(view);
-        const lastAttemptTime =
-          lastAutoPublishAttemptRef.current.get(view.id) ?? 0;
-        const nextPublishFrom = Math.max(lastPublishedTime, lastAttemptTime);
-
-        if (now - nextPublishFrom < intervalMs) {
-          continue;
-        }
-
-        autoPublishInFlightRef.current.add(view.id);
-        lastAutoPublishAttemptRef.current.set(view.id, now);
-
-        publishView(view.id)
-          .then(() =>
-            queryClient.invalidateQueries({ queryKey: ["views", "my"] }),
-          )
-          .catch(() => {
-            // A failed auto refresh should not block the owner from using the page.
-          })
-          .finally(() => {
-            autoPublishInFlightRef.current.delete(view.id);
-          });
-      }
-    }, AUTO_PUBLISH_CHECK_INTERVAL_MS);
-
-    return () => window.clearInterval(intervalId);
-  }, [queryClient, views, viewsQuery.isSuccess]);
 
   function showToast(toast: ToastMessage) {
     setToastMessage(toast);
@@ -1059,7 +971,7 @@ export default function ViewList() {
       showToast({
         type: "success",
         message: isRefresh
-          ? `Cập nhật thành công: ${result.url}`
+          ? `Xuất bản lại thành công: ${result.url}`
           : `Xuất bản thành công: ${result.url}`,
       });
       await queryClient.invalidateQueries({ queryKey: ["views", "my"] });
@@ -1068,25 +980,6 @@ export default function ViewList() {
         type: "error",
         message: getErrorMessage(error, "Không thể xuất bản view."),
       });
-    }
-  }
-
-  async function handleCopyLink(view: OwnerView) {
-    const url = getPublishedUrl(view);
-    if (!url) {
-      return;
-    }
-
-    const absoluteUrl =
-      typeof window === "undefined"
-        ? url
-        : new URL(url, window.location.origin).toString();
-
-    try {
-      await navigator.clipboard.writeText(absoluteUrl);
-      showToast({ type: "success", message: "Đã copy link." });
-    } catch {
-      showToast({ type: "error", message: "Không thể copy link." });
     }
   }
 
@@ -1184,7 +1077,7 @@ export default function ViewList() {
                   "Quyền",
                   "Trạng thái",
                   "Số dòng",
-                  "Lần publish/cập nhật",
+                  "Cập nhật",
                   "Link",
                   "Hành động",
                 ].map((heading) => (
@@ -1247,7 +1140,6 @@ export default function ViewList() {
                   const publishedUrl = getPublishedUrl(view);
                   const canPublish = view.status === "draft";
                   const canEdit = canPublish || isPublishedView(view);
-                  const canRefresh = isPublishedView(view);
                   const canOpen = view.status === "published";
                   const canShare = isPublishedView(view);
                   const shareLabel =
@@ -1289,7 +1181,7 @@ export default function ViewList() {
                         {view.currentSnapshot?.rowCount ?? "—"}
                       </td>
                       <td className="px-5 py-5 font-semibold text-slate-500">
-                        {formatDateTime(view.lastPublishedAt ?? view.updatedAt)}
+                        {formatDateTime(view.currentSnapshot?.fetchedAt)}
                       </td>
                       <td className="max-w-[220px] px-5 py-5">
                         {publishedUrl ? (
@@ -1302,10 +1194,10 @@ export default function ViewList() {
                           </span>
                         )}
                       </td>
-                      <td className="px-5 py-5">
-                        <div className="flex flex-wrap items-center gap-2">
+                      <td className="px-5 py-5 align-top">
+                        <div className="flex flex-wrap items-start gap-2">
                           <button
-                            className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50"
+                            className={SECONDARY_VIEW_ACTION_CLASS}
                             onClick={() => setDetailViewId(view.id)}
                             type="button"
                           >
@@ -1313,7 +1205,7 @@ export default function ViewList() {
                           </button>
                           {canEdit ? (
                             <button
-                              className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50"
+                              className={SECONDARY_VIEW_ACTION_CLASS}
                               onClick={() =>
                                 router.push(
                                   `/owner/views/new?viewId=${view.id}&step=2`,
@@ -1326,7 +1218,7 @@ export default function ViewList() {
                           ) : null}
                           {canPublish ? (
                             <button
-                              className="rounded-md border border-blue-700 bg-blue-700 px-3 py-2 text-sm font-bold text-white transition-colors hover:border-blue-800 hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
+                              className={PRIMARY_VIEW_ACTION_CLASS}
                               disabled={publishViewMutation.isPending}
                               onClick={() => handlePublish(view)}
                               type="button"
@@ -1334,18 +1226,8 @@ export default function ViewList() {
                               Xuất bản
                             </button>
                           ) : null}
-                          {canRefresh ? (
-                            <button
-                              className="rounded-md border border-blue-700 bg-blue-700 px-3 py-2 text-sm font-bold text-white transition-colors hover:border-blue-800 hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
-                              disabled={publishViewMutation.isPending}
-                              onClick={() => handlePublish(view)}
-                              type="button"
-                            >
-                              Cập nhật
-                            </button>
-                          ) : null}
                           <button
-                            className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                            className={SECONDARY_VIEW_ACTION_CLASS}
                             disabled={!canOpen}
                             onClick={() => handleOpenView(view)}
                             type="button"
@@ -1353,15 +1235,7 @@ export default function ViewList() {
                             Mở view
                           </button>
                           <button
-                            className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-                            disabled={!publishedUrl}
-                            onClick={() => handleCopyLink(view)}
-                            type="button"
-                          >
-                            Copy link
-                          </button>
-                          <button
-                            className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                            className={SECONDARY_VIEW_ACTION_CLASS}
                             disabled={!canShare}
                             onClick={() => setSharingView(view)}
                             title={
@@ -1401,3 +1275,5 @@ export default function ViewList() {
     </section>
   );
 }
+
+

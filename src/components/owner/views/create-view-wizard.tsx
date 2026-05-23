@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 /* eslint-disable react-hooks/set-state-in-effect */
 
@@ -9,6 +9,7 @@ import ViewForm, {
   type ViewDraftFormErrors,
   type ViewDraftFormValues,
 } from "@/src/components/owner/views/view-form";
+import type { ReloadMode } from "@/src/components/viewer/shared-view-render";
 import ViewStepper from "@/src/components/owner/views/view-stepper";
 import ViewSummary from "@/src/components/owner/views/view-summary";
 import {
@@ -40,7 +41,7 @@ import type {
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import type { ChangeEvent, SVGProps } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 type WizardStep = 1 | 2 | 3;
 
@@ -69,14 +70,13 @@ type SourceSummary = Pick<
 >;
 
 const DATA_SOURCES_LIMIT = 20;
+const MIN_PREVIEW_REFRESH_INTERVAL_SECONDS = 10;
 const DEFAULT_FORM_VALUES: ViewDraftFormValues = {
   name: "",
   sourceSheetId: "",
   selectionType: "range",
   rangeA1Notation: "A1:D10",
   useFirstRowAsHeader: true,
-  refreshMode: "manual",
-  refreshIntervalSeconds: 60,
   themePreset: "modern",
 };
 
@@ -241,20 +241,6 @@ function getThemePreset(themeOverrideJson: ViewJsonObject | null | undefined) {
   return isThemePreset(preset) ? preset : "modern";
 }
 
-function isAutoPublishEnabled(settingsJson: ViewJsonObject | null | undefined) {
-  return settingsJson?.autoPublishEnabled === true;
-}
-
-function buildSettingsJson(values: ViewDraftFormValues): ViewJsonObject {
-  return {
-    autoPublishEnabled: values.refreshMode === "interval",
-  };
-}
-
-function getRefreshIntervalSeconds(values: ViewDraftFormValues) {
-  return Math.max(1, Number(values.refreshIntervalSeconds) || 60);
-}
-
 function createSourceSummary(view: OwnerViewDetail): SourceSummary | null {
   if (!view.dataSource) {
     return null;
@@ -294,14 +280,6 @@ function validateDraftForm(
     errors.rangeA1Notation = "Vui lòng nhập Range A1.";
   }
 
-  if (
-    values.refreshMode === "interval" &&
-    (!Number.isFinite(values.refreshIntervalSeconds) ||
-      values.refreshIntervalSeconds <= 0)
-  ) {
-    errors.refreshIntervalSeconds = "Refresh interval phải lớn hơn 0.";
-  }
-
   return errors;
 }
 
@@ -324,12 +302,7 @@ function buildCreateViewBody(
     themeOverrideJson: {
       preset: values.themePreset,
     },
-    settingsJson: buildSettingsJson(values),
   };
-
-  if (values.refreshMode === "interval") {
-    body.refreshIntervalSeconds = getRefreshIntervalSeconds(values);
-  }
 
   return body;
 }
@@ -351,12 +324,7 @@ function buildUpdateViewBody(
     themeOverrideJson: {
       preset: values.themePreset,
     },
-    settingsJson: buildSettingsJson(values),
   };
-
-  if (values.refreshMode === "interval") {
-    body.refreshIntervalSeconds = getRefreshIntervalSeconds(values);
-  }
 
   return body;
 }
@@ -381,6 +349,14 @@ export default function CreateViewWizard({
   const [accessMode, setAccessMode] = useState<ViewAccessMode>("public");
   const [preview, setPreview] = useState<DataSourcePreview | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
+  const [previewReloadMode, setPreviewReloadMode] =
+    useState<ReloadMode>("manual");
+  const [previewIntervalSeconds, setPreviewIntervalSeconds] = useState(
+    MIN_PREVIEW_REFRESH_INTERVAL_SECONDS,
+  );
+  const [previewRemainingSeconds, setPreviewRemainingSeconds] = useState<
+    number | null
+  >(null);
   const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
   const [publishedSlug, setPublishedSlug] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<ToastMessage | null>(null);
@@ -435,10 +411,6 @@ export default function CreateViewWizard({
       selectionType: view.selectionType,
       rangeA1Notation: view.rangeA1Notation ?? "",
       useFirstRowAsHeader: view.useFirstRowAsHeader,
-      refreshMode: isAutoPublishEnabled(view.settingsJson)
-        ? "interval"
-        : "manual",
-      refreshIntervalSeconds: view.refreshIntervalSeconds || 60,
       themePreset: getThemePreset(view.themeOverrideJson),
     });
     setAccessMode(view.accessMode === "private" ? "private" : "public");
@@ -537,10 +509,14 @@ export default function CreateViewWizard({
     goToStep(2);
   }
 
-  async function handlePreview() {
+  const handlePreview = useCallback(async () => {
     if (!selectedDataSourceId) {
-      showToast("error", "Vui lòng chọn nguồn dữ liệu.");
-      goToStep(1);
+      setToastMessage({
+        type: "error",
+        message: "Vui lòng chọn nguồn dữ liệu.",
+      });
+      setCurrentStep(1);
+      replaceWizardUrl(viewId, 1);
       return;
     }
 
@@ -558,7 +534,10 @@ export default function CreateViewWizard({
         ...previous,
         ...previewErrors,
       }));
-      showToast("error", "Vui lòng kiểm tra cấu hình preview.");
+      setToastMessage({
+        type: "error",
+        message: "Vui lòng kiểm tra cấu hình preview.",
+      });
       return;
     }
 
@@ -577,13 +556,48 @@ export default function CreateViewWizard({
     } catch (error) {
       const message = getErrorMessage(error, "Không thể preview dữ liệu.");
       setPreviewError(message);
-      showToast("error", message);
+      setToastMessage({ type: "error", message });
     }
-  }
+  }, [
+    formValues,
+    previewMutation,
+    selectedDataSourceId,
+    viewId,
+  ]);
+
+  useEffect(() => {
+    if (currentStep !== 2 || previewReloadMode !== "auto") {
+      setPreviewRemainingSeconds(null);
+      return;
+    }
+
+    const safeInterval = Math.max(
+      MIN_PREVIEW_REFRESH_INTERVAL_SECONDS,
+      previewIntervalSeconds,
+    );
+    setPreviewRemainingSeconds(safeInterval);
+
+    const timer = window.setInterval(() => {
+      setPreviewRemainingSeconds((previous) => {
+        const nextValue = (previous ?? safeInterval) - 1;
+
+        if (nextValue <= 0) {
+          void handlePreview();
+          return safeInterval;
+        }
+
+        return nextValue;
+      });
+    }, 1_000);
+
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, [currentStep, handlePreview, previewIntervalSeconds, previewReloadMode]);
 
   function handleContinueFromConfig() {
     if (!selectedDataSourceId) {
-      showToast("error", "Vui lÃ²ng chá»n nguá»“n dá»¯ liá»‡u.");
+      showToast("error", "Vui lòng chọn nguồn dữ liệu.");
       goToStep(1);
       return;
     }
@@ -592,7 +606,7 @@ export default function CreateViewWizard({
     setFormErrors(errors);
 
     if (Object.keys(errors).length > 0) {
-      showToast("error", "Vui lÃ²ng kiá»ƒm tra láº¡i cáº¥u hÃ¬nh view.");
+      showToast("error", "Vui lòng kiểm tra lại cấu hình view.");
       return;
     }
 
@@ -651,7 +665,7 @@ export default function CreateViewWizard({
     try {
       if (!activeViewId) {
         if (!selectedDataSourceId) {
-          showToast("error", "Vui lÃ²ng chá»n nguá»“n dá»¯ liá»‡u.");
+          showToast("error", "Vui lòng chọn nguồn dữ liệu.");
           goToStep(1);
           return;
         }
@@ -660,7 +674,7 @@ export default function CreateViewWizard({
         setFormErrors(errors);
 
         if (Object.keys(errors).length > 0) {
-          showToast("error", "Vui lÃ²ng kiá»ƒm tra láº¡i cáº¥u hÃ¬nh view.");
+          showToast("error", "Vui lòng kiểm tra lại cấu hình view.");
           goToStep(2);
           return;
         }
@@ -899,28 +913,23 @@ export default function CreateViewWizard({
         />
 
         <section className="min-h-[620px] rounded-lg border border-slate-200 bg-white p-5 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
-          <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
-            <div>
-              <h2 className="text-base font-bold text-slate-900">
-                Bản xem trước trực tiếp
-              </h2>
-              <p className="mt-1 text-sm font-medium text-slate-500">
-                Kiểm tra header và các dòng dữ liệu mẫu trước khi xuất bản.
-              </p>
-            </div>
-            <button
-              className="inline-flex h-10 items-center justify-center rounded-md border border-blue-700 bg-blue-700 px-4 text-sm font-bold text-white transition-colors hover:border-blue-800 hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
-              disabled={previewMutation.isPending}
-              onClick={handlePreview}
-              type="button"
-            >
-              {previewMutation.isPending ? "Đang tải..." : "Tải lại dữ liệu"}
-            </button>
-          </div>
           <PreviewTable
             errorMessage={previewError}
+            intervalSeconds={previewIntervalSeconds}
             isLoading={previewMutation.isPending}
+            onIntervalSecondsChange={(seconds) =>
+              setPreviewIntervalSeconds(
+                Math.max(
+                  MIN_PREVIEW_REFRESH_INTERVAL_SECONDS,
+                  Number(seconds) || MIN_PREVIEW_REFRESH_INTERVAL_SECONDS,
+                ),
+              )
+            }
+            onReload={handlePreview}
+            onReloadModeChange={setPreviewReloadMode}
             preview={preview}
+            reloadMode={previewReloadMode}
+            remainingSeconds={previewRemainingSeconds}
             themePreset={formValues.themePreset}
           />
         </section>
@@ -963,8 +972,6 @@ export default function CreateViewWizard({
           dataSourceTitle={selectedDataSource?.title ?? ""}
           name={formValues.name}
           rangeA1Notation={formValues.rangeA1Notation}
-          refreshMode={formValues.refreshMode}
-          refreshIntervalSeconds={formValues.refreshIntervalSeconds}
           selectionType={formValues.selectionType}
           sourceSheetName={selectedSheetName}
           themePreset={formValues.themePreset}
@@ -1162,3 +1169,4 @@ export default function CreateViewWizard({
     </section>
   );
 }
+

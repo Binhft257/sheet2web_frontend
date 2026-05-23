@@ -169,12 +169,19 @@ export default function SignInForm({
 
     try {
       const parsedDraft = JSON.parse(rawDraft) as Partial<SignInValues>;
-      setValues((previous) => ({
-        ...previous,
-        email: typeof parsedDraft.email === "string" ? parsedDraft.email : "",
-        password:
-          typeof parsedDraft.password === "string" ? parsedDraft.password : "",
-      }));
+      const timer = window.setTimeout(() => {
+        setValues((previous) => ({
+          ...previous,
+          email:
+            typeof parsedDraft.email === "string" ? parsedDraft.email : "",
+          password:
+            typeof parsedDraft.password === "string"
+              ? parsedDraft.password
+              : "",
+        }));
+      }, 0);
+
+      return () => window.clearTimeout(timer);
     } catch {
       window.sessionStorage.removeItem(SIGN_IN_DRAFT_KEY);
     }
@@ -284,7 +291,7 @@ export default function SignInForm({
       }
 
       window.sessionStorage.removeItem(SIGN_IN_DRAFT_KEY);
-      router.push("/owner/dashboard");
+      router.push("/");
       router.refresh();
     } catch {
       setSubmitError("Không thể đăng nhập lúc này. Vui lòng thử lại.");

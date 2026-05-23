@@ -1,4 +1,4 @@
-import { proxyBackendRequest } from "@/src/app/api/_utils/backend-proxy";
+﻿import { proxyBackendRequest } from "@/src/app/api/_utils/backend-proxy";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -11,6 +11,8 @@ export async function GET(request: Request, { params }: RouteContext) {
     request,
     backendPath: `/api/views/${encodeURIComponent(id)}`,
     method: "GET",
+    forwardSearch: true,
+    requireAuth: false,
     fallbackMessage: "Không thể tải chi tiết view.",
   });
 }

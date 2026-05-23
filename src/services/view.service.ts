@@ -81,6 +81,24 @@ export async function getView(id: string): Promise<OwnerViewDetail> {
   }
 }
 
+export async function getViewById(
+  id: string,
+  shareToken?: string,
+): Promise<OwnerViewDetail> {
+  const queryString = buildQueryString({ shareToken });
+
+  try {
+    const response = await apiClient.get<OwnerViewDetail>(
+      `/views/${id}${queryString ? `?${queryString}` : ""}`,
+    );
+    return response.data;
+  } catch (error) {
+    throw new Error(
+      extractServiceErrorMessage(error, "Không thể tải cấu hình refresh của view."),
+    );
+  }
+}
+
 export async function updateView(
   id: string,
   body: UpdateViewBody,

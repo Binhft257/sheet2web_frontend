@@ -1,4 +1,3 @@
-import type { ViewRefreshMode } from "@/src/components/owner/views/view-form";
 import type { ThemePreset, ViewSelectionType } from "@/src/types/view";
 
 type ViewSummaryProps = {
@@ -8,8 +7,6 @@ type ViewSummaryProps = {
   selectionType: ViewSelectionType;
   rangeA1Notation: string;
   themePreset: ThemePreset;
-  refreshMode: ViewRefreshMode;
-  refreshIntervalSeconds: number;
 };
 
 function getSelectionLabel(selectionType: ViewSelectionType) {
@@ -33,8 +30,6 @@ export default function ViewSummary({
   selectionType,
   rangeA1Notation,
   themePreset,
-  refreshMode,
-  refreshIntervalSeconds,
 }: ViewSummaryProps) {
   const items = [
     {
@@ -59,13 +54,6 @@ export default function ViewSummary({
     {
       label: "Theme",
       value: getThemeLabel(themePreset),
-    },
-    {
-      label: "Refresh",
-      value:
-        refreshMode === "interval"
-          ? `${refreshIntervalSeconds || 60} giây`
-          : "Thủ công",
     },
   ];
 

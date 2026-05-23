@@ -1,10 +1,11 @@
-import { apiClient } from "@/src/lib/api";
+﻿import { apiClient } from "@/src/lib/api";
 import {
   buildQueryString,
   extractServiceErrorMessage,
 } from "@/src/services/service-utils";
 import type {
   CreateDataSourceBody,
+  DeleteDataSourceResponse,
   DataSource,
   DataSourceListResponse,
   DataSourcePreview,
@@ -12,6 +13,8 @@ import type {
   DataSourceSheetsResponse,
   GetDataSourcesParams,
   PreviewDataSourceBody,
+  UpdateDataSourceBody,
+  UpdateDataSourceResponse,
 } from "@/src/types/data-source";
 
 type DataSourceSheetsPayload =
@@ -75,9 +78,7 @@ export async function getDataSourceSheets(
 
     return Array.isArray(response.data.items) ? response.data.items : [];
   } catch (error) {
-    throw new Error(
-      extractServiceErrorMessage(error, "Không thể tải danh sách sheet."),
-    );
+    throw new Error(extractServiceErrorMessage(error, "Không thể tải danh sách sheet."));
   }
 }
 
@@ -92,8 +93,36 @@ export async function previewDataSource(
     );
     return response.data;
   } catch (error) {
-    throw new Error(
-      extractServiceErrorMessage(error, "Không thể xem trước dữ liệu."),
+    throw new Error(extractServiceErrorMessage(error, "Không thể xem trước dữ liệu."));
+  }
+}
+
+export async function updateDataSource(
+  id: string,
+  body: UpdateDataSourceBody,
+): Promise<UpdateDataSourceResponse> {
+  try {
+    const response = await apiClient.patch<UpdateDataSourceResponse>(
+      `/data-sources/${id}`,
+      body,
     );
+    return response.data;
+  } catch (error) {
+    throw new Error(
+      extractServiceErrorMessage(error, "Không thể cập nhật nguồn dữ liệu."),
+    );
+  }
+}
+
+export async function deleteDataSource(
+  id: string,
+): Promise<DeleteDataSourceResponse> {
+  try {
+    const response = await apiClient.delete<DeleteDataSourceResponse>(
+      `/data-sources/${id}`,
+    );
+    return response.data;
+  } catch (error) {
+    throw new Error(extractServiceErrorMessage(error, "Không thể xóa nguồn dữ liệu."));
   }
 }

@@ -1,21 +1,31 @@
-"use client";
+﻿"use client";
 
-import AddDataSourceModal from "@/src/components/owner/data-sources/add-data-source-modal";
 import DataSourcesTable from "@/src/components/owner/data-sources/data-sources-table";
+import DeleteDataSourceModal from "@/src/components/owner/data-sources/delete-data-source-modal";
 import Pagination from "@/src/components/owner/data-sources/pagination";
+import UpsertDataSourceModal from "@/src/components/owner/data-sources/upsert-data-source-modal";
 import {
   useCreateDataSource,
   useDataSources,
+  useDeleteDataSource,
+  useUpdateDataSource,
 } from "@/src/hooks/owner/use-data-sources";
 import type {
   CreateDataSourceBody,
+  DataSource,
   DataSourceStatusFilter,
+  UpdateDataSourceBody,
 } from "@/src/types/data-source";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ChangeEvent, SVGProps } from "react";
 import { useState } from "react";
 
 const DATA_SOURCES_LIMIT = 10;
+
+type ModalState =
+  | { mode: "create" }
+  | { mode: "edit"; dataSource: DataSource }
+  | null;
 
 function PlusIcon(props: SVGProps<SVGSVGElement>) {
   return (
@@ -84,7 +94,8 @@ export default function DataSourcesPage() {
   const [statusFilter, setStatusFilter] = useState<
     DataSourceStatusFilter | ""
   >("");
-  const [addModalOpen, setAddModalOpen] = useState(false);
+  const [modalState, setModalState] = useState<ModalState>(null);
+  const [deleteTarget, setDeleteTarget] = useState<DataSource | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const dataSourcesQuery = useDataSources({
@@ -94,6 +105,8 @@ export default function DataSourcesPage() {
     status: statusFilter || undefined,
   });
   const createDataSourceMutation = useCreateDataSource();
+  const updateDataSourceMutation = useUpdateDataSource();
+  const deleteDataSourceMutation = useDeleteDataSource();
 
   const dataSources = dataSourcesQuery.data?.items ?? [];
   const paginationMeta =
@@ -110,6 +123,15 @@ export default function DataSourcesPage() {
       )
     : null;
 
+  const upsertPending =
+    createDataSourceMutation.isPending || updateDataSourceMutation.isPending;
+  const updatingId =
+    updateDataSourceMutation.isPending &&
+    modalState?.mode === "edit" &&
+    modalState.dataSource
+      ? modalState.dataSource.id
+      : null;
+
   function handleSearchChange(event: ChangeEvent<HTMLInputElement>) {
     setSearch(event.target.value);
     setPage(1);
@@ -120,11 +142,50 @@ export default function DataSourcesPage() {
     setPage(1);
   }
 
-  async function handleCreateDataSource(values: CreateDataSourceBody) {
-    await createDataSourceMutation.mutateAsync(values);
-    setPage(1);
-    setToastMessage("Thêm nguồn thành công");
+  function openCreateModal() {
+    setModalState({ mode: "create" });
+  }
+
+  function openEditModal(dataSource: DataSource) {
+    setModalState({ mode: "edit", dataSource });
+  }
+
+  async function refreshDataSources() {
     await queryClient.invalidateQueries({ queryKey: ["data-sources"] });
+  }
+
+  async function handleUpsertDataSource(
+    values: CreateDataSourceBody | UpdateDataSourceBody,
+  ) {
+    if (modalState?.mode === "create") {
+      await createDataSourceMutation.mutateAsync(values as CreateDataSourceBody);
+      setPage(1);
+      setToastMessage("Thêm nguồn thành công");
+      setModalState(null);
+      await refreshDataSources();
+      return;
+    }
+
+    if (modalState?.mode === "edit") {
+      await updateDataSourceMutation.mutateAsync({
+        id: modalState.dataSource.id,
+        body: values as UpdateDataSourceBody,
+      });
+      setModalState(null);
+      setToastMessage("Cập nhật nguồn thành công");
+      await refreshDataSources();
+    }
+  }
+
+  async function handleDeleteDataSource() {
+    if (!deleteTarget) {
+      return;
+    }
+
+    await deleteDataSourceMutation.mutateAsync(deleteTarget.id);
+    setDeleteTarget(null);
+    setToastMessage("Xóa nguồn thành công");
+    await refreshDataSources();
   }
 
   return (
@@ -152,7 +213,7 @@ export default function DataSourcesPage() {
 
         <button
           className="inline-flex h-11 items-center justify-center gap-2.5 rounded-md border border-blue-700 bg-blue-700 px-5 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(30,58,138,0.18)] transition-colors hover:border-blue-800 hover:bg-blue-800"
-          onClick={() => setAddModalOpen(true)}
+          onClick={openCreateModal}
           type="button"
         >
           <PlusIcon className="h-5 w-5" />
@@ -186,20 +247,41 @@ export default function DataSourcesPage() {
 
       <DataSourcesTable
         dataSources={dataSources}
+        deletingId={
+          deleteDataSourceMutation.isPending && deleteTarget ? deleteTarget.id : null
+        }
         errorMessage={tableErrorMessage}
         isLoading={dataSourcesQuery.isPending}
+        onDelete={setDeleteTarget}
+        onEdit={openEditModal}
         onRetry={() => dataSourcesQuery.refetch()}
+        updatingId={updatingId}
       />
 
       {!tableErrorMessage ? (
         <Pagination meta={paginationMeta} onPageChange={setPage} />
       ) : null}
 
-      <AddDataSourceModal
-        isSubmitting={createDataSourceMutation.isPending}
-        onClose={() => setAddModalOpen(false)}
-        onSubmit={handleCreateDataSource}
-        open={addModalOpen}
+      <UpsertDataSourceModal
+        dataSource={modalState?.mode === "edit" ? modalState.dataSource : null}
+        isSubmitting={upsertPending}
+        key={
+          modalState?.mode === "edit"
+            ? `edit-${modalState.dataSource.id}`
+            : "create-data-source"
+        }
+        mode={modalState?.mode ?? "create"}
+        onClose={() => setModalState(null)}
+        onSubmit={handleUpsertDataSource}
+        open={Boolean(modalState)}
+      />
+
+      <DeleteDataSourceModal
+        dataSource={deleteTarget}
+        isSubmitting={deleteDataSourceMutation.isPending}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDeleteDataSource}
+        open={Boolean(deleteTarget)}
       />
     </section>
   );

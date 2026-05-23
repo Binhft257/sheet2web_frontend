@@ -113,6 +113,7 @@ export type PublishedViewInfo = {
   name: string;
   slug: string;
   accessMode: ViewAccessMode;
+  refreshIntervalSeconds?: number;
   themeId: string | null;
   themeOverrideJson?: ViewJsonObject | null;
   settingsJson?: ViewJsonObject | null;
