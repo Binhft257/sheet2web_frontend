@@ -94,7 +94,7 @@ const workspaceOptions: WorkspaceOption[] = [
     Icon: DatabaseIcon,
   },
   {
-    href: "/viewer/accessible-views",
+    href: "/viewer/dashboard",
     title: "Chế độ Xem dữ liệu",
     description:
       "Dành cho việc truy cập nhanh, xem và tương tác với các bảng dữ liệu đã được chia sẻ hoặc xuất bản.",

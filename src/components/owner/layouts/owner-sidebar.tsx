@@ -1,6 +1,5 @@
 "use client";
 
-import { signOut } from "next-auth/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactElement, SVGProps } from "react";
@@ -89,7 +88,7 @@ function CreateViewIcon(props: IconProps) {
   );
 }
 
-function LogoutIcon(props: IconProps) {
+function WorkspaceSwitchIcon(props: IconProps) {
   return (
     <svg
       aria-hidden="true"
@@ -101,8 +100,8 @@ function LogoutIcon(props: IconProps) {
       viewBox="0 0 24 24"
       {...props}
     >
-      <path d="M14 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-2" />
-      <path d="M9 12h11m-3-3 3 3-3 3" />
+      <path d="M7 7h11m-3-3 3 3-3 3" />
+      <path d="M17 17H6m3-3-3 3 3 3" />
     </svg>
   );
 }
@@ -190,14 +189,13 @@ export default function OwnerSidebar() {
       </nav>
 
       <div className="border-t border-slate-100 p-4">
-        <button
-          className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md border border-blue-700 bg-blue-700 px-4 text-sm font-semibold text-white transition-colors hover:border-blue-800 hover:bg-blue-800"
-          onClick={() => signOut({ callbackUrl: "/sign-in" })}
-          type="button"
+        <Link
+          className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-4 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
+          href="/"
         >
-          <LogoutIcon className="h-5 w-5" />
-          Đăng xuất
-        </button>
+          <WorkspaceSwitchIcon className="h-5 w-5" />
+          Đổi workspace
+        </Link>
       </div>
     </aside>
   );

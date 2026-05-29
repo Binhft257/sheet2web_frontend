@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation";
+
 export default function Page() {
-  return <div>Danh sách view có thể truy cập</div>;
+  redirect("/viewer/shared");
 }

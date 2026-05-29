@@ -153,6 +153,11 @@ function formatDateTime(dateTime: string | null | undefined) {
   }).format(parsed);
 }
 
+function toDateTimeLocalInputValue(date: Date) {
+  const localTime = date.getTime() - date.getTimezoneOffset() * 60_000;
+  return new Date(localTime).toISOString().slice(0, 16);
+}
+
 function isPublishedView(view: OwnerView) {
   return view.status.toLowerCase() === "published";
 }
@@ -473,9 +478,14 @@ function SharingModal({
   const queryClient = useQueryClient();
   const [email, setEmail] = useState("");
   const [tokenName, setTokenName] = useState("");
+  const [tokenExpiresAt, setTokenExpiresAt] = useState("");
   const [createdTokenUrl, setCreatedTokenUrl] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"permissions" | "tokens">(
     "permissions",
+  );
+  const minTokenExpiresAt = useMemo(
+    () => toDateTimeLocalInputValue(new Date()),
+    [],
   );
 
   const enabled = Boolean(view);
@@ -523,13 +533,14 @@ function SharingModal({
       }),
   });
   const createTokenMutation = useMutation({
-    mutationFn: () =>
+    mutationFn: (expiresAt: string | null) =>
       createShareToken(view?.id ?? "", {
         name: tokenName.trim() || undefined,
-        expiresAt: null,
+        expiresAt,
       }),
     onSuccess: async (token) => {
       setTokenName("");
+      setTokenExpiresAt("");
       setCreatedTokenUrl(getShareTokenUrl(token));
       onToast({ type: "success", message: "Đã tạo link chia sẻ." });
       await queryClient.invalidateQueries({
@@ -609,6 +620,36 @@ function SharingModal({
     }
 
     removePermissionMutation.mutate(permissionId);
+  }
+
+  async function handleCreateToken(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const expiresAtInput = tokenExpiresAt.trim();
+    let expiresAt: string | null = null;
+
+    if (expiresAtInput) {
+      const parsedExpiresAt = new Date(expiresAtInput);
+
+      if (Number.isNaN(parsedExpiresAt.getTime())) {
+        onToast({
+          type: "error",
+          message: "Thời gian hết hạn không hợp lệ.",
+        });
+        return;
+      }
+
+      if (parsedExpiresAt.getTime() <= Date.now()) {
+        onToast({
+          type: "error",
+          message: "Thời gian hết hạn phải lớn hơn hiện tại.",
+        });
+        return;
+      }
+
+      expiresAt = parsedExpiresAt.toISOString();
+    }
+
+    await createTokenMutation.mutateAsync(expiresAt);
   }
 
   function handleRevokeToken(tokenId: string) {
@@ -773,23 +814,42 @@ function SharingModal({
             </div>
           ) : (
             <div className="space-y-5">
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <input
-                  className="h-11 min-w-0 flex-1 rounded-md border border-slate-200 bg-white px-4 text-sm font-medium text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-blue-700 focus:ring-2 focus:ring-blue-100"
-                  onChange={(event) => setTokenName(event.target.value)}
-                  placeholder="Tên link chia sẻ"
-                  type="text"
-                  value={tokenName}
-                />
+              <form
+                className="grid gap-3 md:grid-cols-[minmax(0,1fr)_220px_auto]"
+                onSubmit={handleCreateToken}
+              >
+                <label className="grid gap-1.5">
+                  <span className="text-xs font-bold uppercase text-slate-400">
+                    Tên link
+                  </span>
+                  <input
+                    className="h-11 min-w-0 rounded-md border border-slate-200 bg-white px-4 text-sm font-medium text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-blue-700 focus:ring-2 focus:ring-blue-100"
+                    onChange={(event) => setTokenName(event.target.value)}
+                    placeholder="Tên link chia sẻ"
+                    type="text"
+                    value={tokenName}
+                  />
+                </label>
+                <label className="grid gap-1.5">
+                  <span className="text-xs font-bold uppercase text-slate-400">
+                    Hết hạn
+                  </span>
+                  <input
+                    className="h-11 min-w-0 rounded-md border border-slate-200 bg-white px-4 text-sm font-medium text-slate-900 outline-none transition-colors focus:border-blue-700 focus:ring-2 focus:ring-blue-100"
+                    min={minTokenExpiresAt}
+                    onChange={(event) => setTokenExpiresAt(event.target.value)}
+                    type="datetime-local"
+                    value={tokenExpiresAt}
+                  />
+                </label>
                 <button
-                  className="inline-flex h-11 items-center justify-center rounded-md border border-blue-700 bg-blue-700 px-5 text-sm font-bold text-white transition-colors hover:border-blue-800 hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex h-11 items-center justify-center self-end rounded-md border border-blue-700 bg-blue-700 px-5 text-sm font-bold text-white transition-colors hover:border-blue-800 hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
                   disabled={createTokenMutation.isPending}
-                  onClick={() => createTokenMutation.mutate()}
-                  type="button"
+                  type="submit"
                 >
                   Tạo link
                 </button>
-              </div>
+              </form>
 
               {createdTokenUrl ? (
                 <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-4">
