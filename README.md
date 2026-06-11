@@ -1,6 +1,6 @@
 # Sheet2Web
 
-Sheet2Web is a Next.js frontend for turning public Google Sheets into publishable web views. It provides authentication screens, owner workspaces, Google Sheets data-source management, view creation and publishing flows, public view rendering, viewer dashboards, share-token access, and basic admin pages.
+Sheet2Web is a Next.js frontend for turning public Google Sheets into publishable web views. It provides authentication screens, owner workspaces, Google Sheets data-source management, view creation and publishing flows, public view rendering, viewer dashboards, share-token access, route guarding through Next.js Proxy, and basic admin pages.
 
 ## Table of Contents
 
@@ -37,7 +37,7 @@ This project is a frontend application built with Next.js, React, and TypeScript
 
 ## Current Features
 
-- Sign in, sign up, account verification, activation-code retry, and forgot-password screen.
+- Sign in, sign up, account verification, activation-code retry, and forgot/reset password flow.
 - Credential login through NextAuth and backend JWT storage in the session.
 - Owner workspace with dashboard, data-source listing, data-source creation, editing, deletion, sheet listing, and preview support.
 - View creation wizard for selecting a data source, sheet, range, display options, access mode, and publish settings.
@@ -103,6 +103,7 @@ Notes:
 - `AUTH_SECRET` is required by NextAuth.
 - `API_URL` must point to the backend server base URL, without the `/api` suffix.
 - For the default backend setup, `API_URL=http://localhost:3000` means frontend proxy routes call backend endpoints such as `http://localhost:3000/api/auth/login`.
+- `.env.example` lists the required variable names only; add real values in your local `.env`.
 
 ## Running The Project
 
@@ -177,13 +178,18 @@ Open a shared view by token:
 
 | Route                   | Description                    |
 | ----------------------- | ------------------------------ |
-| `/`                     | Root entry page                |
 | `/sign-in`              | Sign-in page                   |
 | `/sign-up`              | Registration page              |
-| `/forgot-password`      | Forgot-password page           |
+| `/forgot-password`      | Forgot/reset password page     |
 | `/verify/:id`           | Activation-code verification   |
 | `/v/:slug`              | Public published view          |
 | `/token/:token`         | Shared view token access       |
+
+### Authenticated Root
+
+| Route | Description                      |
+| ----- | -------------------------------- |
+| `/`   | Workspace picker after sign-in   |
 
 ### Owner
 
@@ -191,13 +197,13 @@ Open a shared view by token:
 | ----------------------------- | ---------------------------- |
 | `/owner/dashboard`            | Owner dashboard              |
 | `/owner/data-sources`         | Data-source management       |
-| `/owner/data-sources/new`     | Data-source creation page    |
-| `/owner/data-sources/:sourceId` | Data-source detail page    |
+| `/owner/data-sources/new`     | Data-source creation placeholder |
+| `/owner/data-sources/:sourceId` | Data-source detail placeholder |
 | `/owner/views`                | View management              |
 | `/owner/views/new`            | View creation wizard         |
-| `/owner/views/:viewId`        | View detail page             |
-| `/owner/permissions`          | Permission management page   |
-| `/owner/settings`             | Owner settings page          |
+| `/owner/views/:viewId`        | View detail placeholder      |
+| `/owner/permissions`          | Permission management placeholder |
+| `/owner/settings`             | Owner settings placeholder   |
 
 ### Viewer
 
@@ -214,10 +220,10 @@ Open a shared view by token:
 
 | Route             | Description       |
 | ----------------- | ----------------- |
-| `/admin/dashboard` | Admin dashboard  |
-| `/admin/users`    | User management   |
-| `/admin/views`    | View management   |
-| `/admin/settings` | Admin settings    |
+| `/admin/dashboard` | Admin dashboard placeholder |
+| `/admin/users`    | User management placeholder  |
+| `/admin/views`    | View management placeholder  |
+| `/admin/settings` | Admin settings placeholder   |
 
 ## API Proxy Routes
 
@@ -230,6 +236,8 @@ These routes are implemented in `src/app/api` and proxy requests to the backend 
 | POST   | `/api/auth/register`     | Register a user                   |
 | POST   | `/api/auth/check-code`   | Verify activation code            |
 | POST   | `/api/auth/retry-active` | Request a new activation code     |
+| POST   | `/api/auth/forgot-password` | Request a password reset code  |
+| POST   | `/api/auth/reset-password` | Reset password with code        |
 | GET    | `/api/auth/profile`      | Get current authenticated profile |
 | *      | `/api/auth/[...nextauth]` | NextAuth route handler           |
 
@@ -248,7 +256,6 @@ These routes are implemented in `src/app/api` and proxy requests to the backend 
 
 | Method | Endpoint                              | Description                 |
 | ------ | ------------------------------------- | --------------------------- |
-| GET    | `/api/views`                          | List views                  |
 | POST   | `/api/views`                          | Create a view               |
 | GET    | `/api/views/my`                       | List current user's views   |
 | GET    | `/api/views/:id`                      | Get a view by ID            |
@@ -258,8 +265,10 @@ These routes are implemented in `src/app/api` and proxy requests to the backend 
 | PATCH  | `/api/views/:id/published`            | Update published settings   |
 | GET    | `/api/views/:id/permissions`          | List permissions            |
 | POST   | `/api/views/:id/permissions`          | Grant permission            |
+| DELETE | `/api/views/:id/permissions/:permissionId` | Remove permission      |
 | GET    | `/api/views/:id/share-tokens`         | List share tokens           |
 | POST   | `/api/views/:id/share-tokens`         | Create share token          |
+| PATCH  | `/api/views/:id/share-tokens/:tokenId/revoke` | Revoke share token |
 
 ### Viewer and Public Views
 
@@ -278,7 +287,7 @@ src/
 |-- hooks/                # React Query hooks for owner and viewer features
 |-- services/             # Client service wrappers for API calls
 |-- types/                # Shared TypeScript types
-`-- middleware.ts         # Route middleware
+`-- proxy.ts              # Route proxy guard
 ```
 
 Key areas under `src/app/`:
@@ -288,6 +297,7 @@ Key areas under `src/app/`:
 - `(viewer)`: viewer workspace pages for dashboards and accessible/shared views.
 - `(admin)`: admin shell pages.
 - `api`: route handlers that proxy frontend requests to the backend.
+- `api/_utils`: shared backend proxy helpers used by route handlers.
 
 Key component areas under `src/components/`:
 
@@ -310,7 +320,6 @@ Key component areas under `src/components/`:
 ## Future Updates
 
 - Add complete admin data integration for users, views, and settings.
-- Add password reset backend integration.
 - Improve role-based route protection for owner, viewer, and admin areas.
 - Add loading skeletons and error recovery states across all workspace pages.
 - Add automated tests for authentication, route guards, data-source flows, view publishing, and viewer access.

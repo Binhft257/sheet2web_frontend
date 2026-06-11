@@ -95,7 +95,10 @@ export async function getViewById(
     return response.data;
   } catch (error) {
     throw new Error(
-      extractServiceErrorMessage(error, "Không thể tải cấu hình refresh của view."),
+      extractServiceErrorMessage(
+        error,
+        "Không thể tải cấu hình refresh của view.",
+      ),
     );
   }
 }

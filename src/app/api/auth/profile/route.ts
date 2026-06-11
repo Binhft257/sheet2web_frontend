@@ -5,7 +5,7 @@ type ApiErrorResponse = {
   message?: string | string[];
 };
 
-const PROFILE_ENDPOINTS = ["/api/auth/profile", "/api/auth/me", "/api/users/me"];
+const PROFILE_ENDPOINT = "/api/users/me";
 
 function extractErrorMessage(payload: unknown, fallbackMessage: string) {
   if (!payload || typeof payload !== "object") {
@@ -47,44 +47,32 @@ export async function GET() {
       );
     }
 
-    let lastStatus = 500;
-    let lastPayload: unknown = null;
+    const backendResponse = await fetch(`${baseApiUrl}${PROFILE_ENDPOINT}`, {
+      method: "GET",
+      cache: "no-store",
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${session.accessToken}`,
+      },
+    });
 
-    for (const endpoint of PROFILE_ENDPOINTS) {
-      const backendResponse = await fetch(`${baseApiUrl}${endpoint}`, {
-        method: "GET",
-        cache: "no-store",
-        headers: {
-          Accept: "application/json",
-          Authorization: `Bearer ${session.accessToken}`,
-        },
-      });
-
-      let payload: unknown = null;
-      try {
-        payload = await backendResponse.json();
-      } catch {
-        payload = null;
-      }
-
-      if (backendResponse.ok) {
-        return NextResponse.json(payload ?? { ok: true }, {
-          status: backendResponse.status,
-        });
-      }
-
-      lastStatus = backendResponse.status;
-      lastPayload = payload;
-
-      if (backendResponse.status !== 404) {
-        break;
-      }
+    let payload: unknown = null;
+    try {
+      payload = await backendResponse.json();
+    } catch {
+      payload = null;
     }
 
-    return NextResponse.json(
-      { message: extractErrorMessage(lastPayload, fallbackMessage) },
-      { status: lastStatus },
-    );
+    if (!backendResponse.ok) {
+      return NextResponse.json(
+        { message: extractErrorMessage(payload, fallbackMessage) },
+        { status: backendResponse.status },
+      );
+    }
+
+    return NextResponse.json(payload ?? { ok: true }, {
+      status: backendResponse.status,
+    });
   } catch {
     return NextResponse.json({ message: fallbackMessage }, { status: 500 });
   }
