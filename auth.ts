@@ -66,11 +66,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const res = await fetch(`${process.env.API_URL}/api/auth/login`, {
           method: "POST",
           headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
+            "Content-Type": "application/json",
           },
-          body: new URLSearchParams({
-            username: email,
-            password,
+          body: JSON.stringify({
+            email,
+            passwordHash: password,
           }),
         });
 

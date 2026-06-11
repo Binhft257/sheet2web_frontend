@@ -20,6 +20,25 @@ export type CheckActivationCodeResponse = {
   message: string;
 };
 
+export type ForgotPasswordRequest = {
+  email: string;
+};
+
+export type ForgotPasswordResponse = {
+  id: string;
+  email: string;
+};
+
+export type ResetPasswordRequest = {
+  id: string;
+  code: string;
+  passwordHash: string;
+};
+
+export type ResetPasswordResponse = {
+  message: string;
+};
+
 function extractErrorMessage(payload: unknown, fallbackMessage: string) {
   if (!payload || typeof payload !== "object") {
     return fallbackMessage;
@@ -89,5 +108,31 @@ export async function checkActivationCode(
       code: body.code,
     },
     "Không thể xác minh mã lúc này. Vui lòng thử lại.",
+  );
+}
+
+export async function forgotPassword(
+  body: ForgotPasswordRequest,
+): Promise<ForgotPasswordResponse> {
+  return postJson<ForgotPasswordResponse>(
+    "/api/auth/forgot-password",
+    {
+      email: body.email,
+    },
+    "Không thể gửi yêu cầu quên mật khẩu. Vui lòng thử lại.",
+  );
+}
+
+export async function resetPassword(
+  body: ResetPasswordRequest,
+): Promise<ResetPasswordResponse> {
+  return postJson<ResetPasswordResponse>(
+    "/api/auth/reset-password",
+    {
+      id: body.id,
+      code: body.code,
+      passwordHash: body.passwordHash,
+    },
+    "Không thể đặt lại mật khẩu. Vui lòng thử lại.",
   );
 }

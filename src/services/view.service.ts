@@ -6,6 +6,7 @@ import {
 import type {
   CreateShareTokenBody,
   CreateViewBody,
+  DeleteViewResponse,
   GetViewsParams,
   OwnerViewDetail,
   OwnerViewListResponse,
@@ -142,6 +143,17 @@ export async function publishView(id: string): Promise<PublishViewResponse> {
   } catch (error) {
     throw new Error(
       extractServiceErrorMessage(error, "Không thể xuất bản view."),
+    );
+  }
+}
+
+export async function deleteView(id: string): Promise<DeleteViewResponse> {
+  try {
+    const response = await apiClient.delete<DeleteViewResponse>(`/views/${id}`);
+    return response.data;
+  } catch (error) {
+    throw new Error(
+      extractServiceErrorMessage(error, "Không thể xóa view."),
     );
   }
 }

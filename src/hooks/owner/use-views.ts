@@ -3,6 +3,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   createView,
+  deleteView,
   getView,
   getViews,
   publishView,
@@ -71,5 +72,11 @@ export function useUpdatePublishedView() {
 export function usePublishView() {
   return useMutation({
     mutationFn: (id: string) => publishView(id),
+  });
+}
+
+export function useDeleteView() {
+  return useMutation({
+    mutationFn: (id: string) => deleteView(id),
   });
 }

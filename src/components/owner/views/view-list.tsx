@@ -1,6 +1,11 @@
 "use client";
 
-import { usePublishView, useView, useViews } from "@/src/hooks/owner/use-views";
+import {
+  useDeleteView,
+  usePublishView,
+  useView,
+  useViews,
+} from "@/src/hooks/owner/use-views";
 import {
   addViewPermissionByEmail,
   createShareToken,
@@ -34,6 +39,8 @@ const SECONDARY_VIEW_ACTION_CLASS =
   "inline-flex h-10 w-24 items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50";
 const PRIMARY_VIEW_ACTION_CLASS =
   "inline-flex h-10 w-24 items-center justify-center whitespace-nowrap rounded-md border border-blue-700 bg-blue-700 text-sm font-bold text-white transition-colors hover:border-blue-800 hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60";
+const DANGER_VIEW_ACTION_CLASS =
+  "inline-flex h-10 w-24 items-center justify-center whitespace-nowrap rounded-md border border-red-200 bg-red-50 text-sm font-bold text-red-700 transition-colors hover:border-red-300 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60";
 
 type ToastMessage = {
   type: "success" | "error";
@@ -988,6 +995,7 @@ export default function ViewList() {
     accessMode: accessModeFilter || undefined,
   });
   const publishViewMutation = usePublishView();
+  const deleteViewMutation = useDeleteView();
 
   const views = useMemo(() => viewsQuery.data?.items ?? [], [viewsQuery.data]);
   const paginationMeta = viewsQuery.data?.meta ?? {
@@ -1043,13 +1051,24 @@ export default function ViewList() {
     }
   }
 
-  function handleOpenView(view: OwnerView) {
-    const url = getPublishedUrl(view);
-    if (!url || typeof window === "undefined") {
+  async function handleDelete(view: OwnerView) {
+    if (!window.confirm(`Bạn có chắc muốn xóa view "${view.name}"?`)) {
       return;
     }
 
-    window.open(url, "_blank", "noopener,noreferrer");
+    try {
+      await deleteViewMutation.mutateAsync(view.id);
+      showToast({
+        type: "success",
+        message: "Đã xóa view thành công.",
+      });
+      await queryClient.invalidateQueries({ queryKey: ["views", "my"] });
+    } catch (error) {
+      showToast({
+        type: "error",
+        message: getErrorMessage(error, "Không thể xóa view."),
+      });
+    }
   }
 
   return (
@@ -1200,7 +1219,6 @@ export default function ViewList() {
                   const publishedUrl = getPublishedUrl(view);
                   const canPublish = view.status === "draft";
                   const canEdit = canPublish || isPublishedView(view);
-                  const canOpen = view.status === "published";
                   const canShare = isPublishedView(view);
                   const shareLabel =
                     view.accessMode === "private" ? "Phân quyền" : "Chia sẻ";
@@ -1245,9 +1263,15 @@ export default function ViewList() {
                       </td>
                       <td className="max-w-[220px] px-5 py-5">
                         {publishedUrl ? (
-                          <span className="block truncate font-semibold text-blue-800">
+                          <a
+                            className="block truncate font-semibold text-blue-700 transition-colors hover:text-blue-800 hover:underline"
+                            href={publishedUrl}
+                            rel="noopener noreferrer"
+                            target="_blank"
+                            title={publishedUrl}
+                          >
                             {publishedUrl}
-                          </span>
+                          </a>
                         ) : (
                           <span className="font-semibold text-slate-400">
                             Chưa publish
@@ -1288,14 +1312,6 @@ export default function ViewList() {
                           ) : null}
                           <button
                             className={SECONDARY_VIEW_ACTION_CLASS}
-                            disabled={!canOpen}
-                            onClick={() => handleOpenView(view)}
-                            type="button"
-                          >
-                            Mở view
-                          </button>
-                          <button
-                            className={SECONDARY_VIEW_ACTION_CLASS}
                             disabled={!canShare}
                             onClick={() => setSharingView(view)}
                             title={
@@ -1306,6 +1322,20 @@ export default function ViewList() {
                             type="button"
                           >
                             {shareLabel}
+                          </button>
+                          <button
+                            className={DANGER_VIEW_ACTION_CLASS}
+                            disabled={
+                              deleteViewMutation.isPending &&
+                              deleteViewMutation.variables === view.id
+                            }
+                            onClick={() => handleDelete(view)}
+                            type="button"
+                          >
+                            {deleteViewMutation.isPending &&
+                            deleteViewMutation.variables === view.id
+                              ? "Đang xóa"
+                              : "Xóa"}
                           </button>
                         </div>
                       </td>

@@ -1,3 +1,5 @@
-export default function Page() {
-  return <div>Trang quên mật khẩu</div>;
+import ForgotPasswordForm from "@/src/components/auth/forgot-password-form";
+
+export default function ForgotPasswordPage() {
+  return <ForgotPasswordForm />;
 }

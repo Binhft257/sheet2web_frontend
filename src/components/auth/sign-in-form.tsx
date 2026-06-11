@@ -372,7 +372,7 @@ export default function SignInForm({
                 </label>
                 <a
                   className="text-sm font-medium text-blue-500 transition-colors hover:text-blue-600"
-                  href="#"
+                  href="/forgot-password"
                 >
                   Quên mật khẩu?
                 </a>

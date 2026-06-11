@@ -108,6 +108,13 @@ export type PublishViewResponse = {
   url: string;
 };
 
+export type DeleteViewResponse = {
+  message: string;
+  id: string;
+  status: ViewStatus;
+  deletedAt: string;
+};
+
 export type PublishedViewInfo = {
   id: string;
   name: string;

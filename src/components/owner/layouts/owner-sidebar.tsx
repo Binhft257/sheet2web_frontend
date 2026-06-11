@@ -12,6 +12,11 @@ type NavigationItem = {
   Icon: (props: IconProps) => ReactElement;
 };
 
+type OwnerSidebarProps = {
+  mobileOpen?: boolean;
+  onMobileClose?: () => void;
+};
+
 function DashboardIcon(props: IconProps) {
   return (
     <svg
@@ -106,6 +111,23 @@ function WorkspaceSwitchIcon(props: IconProps) {
   );
 }
 
+function CloseIcon(props: IconProps) {
+  return (
+    <svg
+      aria-hidden="true"
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="1.8"
+      viewBox="0 0 24 24"
+      {...props}
+    >
+      <path d="m18 6-12 12M6 6l12 12" />
+    </svg>
+  );
+}
+
 const navigationItems: NavigationItem[] = [
   {
     href: "/owner/dashboard",
@@ -141,11 +163,14 @@ function isActiveRoute(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export default function OwnerSidebar() {
+export default function OwnerSidebar({
+  mobileOpen = false,
+  onMobileClose,
+}: OwnerSidebarProps) {
   const pathname = usePathname();
 
-  return (
-    <aside className="hidden h-screen w-64 shrink-0 border-r border-slate-100 bg-white shadow-[1px_0_3px_rgba(15,23,42,0.04)] lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:flex-col">
+  const renderContent = () => (
+    <>
       <div className="border-b border-slate-100 px-5 py-5">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-md bg-blue-700 text-white shadow-[0_8px_18px_rgba(30,58,138,0.2)]">
@@ -175,6 +200,7 @@ export default function OwnerSidebar() {
                       : "text-slate-600 hover:bg-slate-50 hover:text-blue-900"
                   }`}
                   href={href}
+                  onClick={onMobileClose}
                 >
                   <Icon className="h-5 w-5 shrink-0" />
                   <span className="truncate">{label}</span>
@@ -192,11 +218,42 @@ export default function OwnerSidebar() {
         <Link
           className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-4 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
           href="/"
+          onClick={onMobileClose}
         >
           <WorkspaceSwitchIcon className="h-5 w-5" />
           Đổi workspace
         </Link>
       </div>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      <aside className="hidden h-screen w-64 shrink-0 border-r border-slate-100 bg-white shadow-[1px_0_3px_rgba(15,23,42,0.04)] lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:flex-col">
+        {renderContent()}
+      </aside>
+
+      {mobileOpen ? (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <button
+            aria-label="Đóng menu"
+            className="absolute inset-0 h-full w-full cursor-default bg-slate-900/45"
+            onClick={onMobileClose}
+            type="button"
+          />
+          <aside className="relative flex h-full w-[min(18rem,calc(100vw-2rem))] flex-col border-r border-slate-100 bg-white shadow-[16px_0_45px_rgba(15,23,42,0.18)]">
+            <button
+              aria-label="Đóng menu"
+              className="absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
+              onClick={onMobileClose}
+              type="button"
+            >
+              <CloseIcon className="h-5 w-5" />
+            </button>
+            {renderContent()}
+          </aside>
+        </div>
+      ) : null}
+    </>
   );
 }

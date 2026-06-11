@@ -6,6 +6,7 @@ import { signOut } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
 
 type WorkspaceTopbarProps = {
+  onMenuClick?: () => void;
   title: string;
 };
 
@@ -17,7 +18,27 @@ function getProfileEmail(profile: Awaited<ReturnType<typeof getUserProfile>> | u
   return profile?.email || "--";
 }
 
-export default function WorkspaceTopbar({ title }: WorkspaceTopbarProps) {
+function MenuIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="1.8"
+      viewBox="0 0 24 24"
+    >
+      <path d="M4 7h16M4 12h16M4 17h16" />
+    </svg>
+  );
+}
+
+export default function WorkspaceTopbar({
+  onMenuClick,
+  title,
+}: WorkspaceTopbarProps) {
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement | null>(null);
   const profileQuery = useQuery({
@@ -48,8 +69,18 @@ export default function WorkspaceTopbar({ title }: WorkspaceTopbarProps) {
   const profile = profileQuery.data;
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-slate-100 bg-white/95 px-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] backdrop-blur sm:px-6">
-      <div className="min-w-0">
+    <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-3 border-b border-slate-100 bg-white/95 px-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] backdrop-blur sm:px-6">
+      <div className="flex min-w-0 items-center gap-3">
+        {onMenuClick ? (
+          <button
+            aria-label="Mở menu"
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900 lg:hidden"
+            onClick={onMenuClick}
+            type="button"
+          >
+            <MenuIcon />
+          </button>
+        ) : null}
         <span className="block truncate text-sm font-bold text-slate-900">
           {title}
         </span>
@@ -68,7 +99,7 @@ export default function WorkspaceTopbar({ title }: WorkspaceTopbarProps) {
           </button>
 
           {profileOpen ? (
-            <div className="absolute right-0 top-12 w-80 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-[0_18px_55px_rgba(15,23,42,0.16)]">
+            <div className="absolute right-0 top-12 w-[calc(100vw-2rem)] max-w-80 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-[0_18px_55px_rgba(15,23,42,0.16)]">
               <div className="border-b border-slate-100 px-4 py-4">
                 <p className="text-xs font-bold uppercase text-slate-400">
                   Hồ sơ người dùng

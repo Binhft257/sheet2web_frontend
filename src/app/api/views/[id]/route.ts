@@ -29,3 +29,14 @@ export async function PATCH(request: Request, { params }: RouteContext) {
     invalidBodyMessage: "Dữ liệu cập nhật view không hợp lệ.",
   });
 }
+
+export async function DELETE(request: Request, { params }: RouteContext) {
+  const { id } = await params;
+
+  return proxyBackendRequest({
+    request,
+    backendPath: `/api/views/${encodeURIComponent(id)}`,
+    method: "DELETE",
+    fallbackMessage: "Không thể xóa view.",
+  });
+}
