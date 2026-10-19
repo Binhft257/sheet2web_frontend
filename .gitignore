@@ -30,8 +30,27 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# local environment files
 .env
+.env.*
+!.env.example
+
+# local agent skills and instructions
+/.agents/
+/.claude/
+/.codex/
+/skills-lock.json
+/AGENTS.md
+/CLAUDE.md
+
+# local deployment helpers and generated packages
+/release.py
+/ecosystem.config.js
+/deploy_package.tar.gz
+
+# Python cache
+__pycache__/
+*.py[cod]
 
 # vercel
 .vercel

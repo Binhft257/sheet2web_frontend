@@ -1,7 +1,8 @@
 import axios from "axios";
+import { appPath } from "@/src/lib/app-path";
 
 export const apiClient = axios.create({
-  baseURL: "/api",
+  baseURL: appPath("/api"),
   headers: {
     "Content-Type": "application/json",
   },

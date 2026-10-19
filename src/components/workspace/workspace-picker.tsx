@@ -1,8 +1,11 @@
 "use client";
 
 import { signOut } from "next-auth/react";
-import Link from "next/link";
+import { appPath } from "@/src/lib/app-path";
+import AppLink from "@/src/components/app-link";
 import type { ReactElement, SVGProps } from "react";
+import BrandMark from "@/src/components/common/brand-mark";
+import styles from "./workspace-picker.module.css";
 
 type IconProps = SVGProps<SVGSVGElement>;
 
@@ -88,83 +91,160 @@ function LogoutIcon(props: IconProps) {
 const workspaceOptions: WorkspaceOption[] = [
   {
     href: "/owner/dashboard",
-    title: "Không gian Quản trị",
+    title: "Quản lý & xuất bản",
     description:
-      "Dành cho việc kết nối, cấu hình và quản lý dữ liệu Google Sheets của bạn. Xây dựng giao diện web mới từ bảng tính.",
+      "Kết nối Google Sheets, tạo giao diện và chia sẻ dữ liệu theo cách của bạn.",
     Icon: DatabaseIcon,
   },
   {
     href: "/viewer/dashboard",
-    title: "Chế độ Xem dữ liệu",
+    title: "Xem dữ liệu được chia sẻ",
     description:
-      "Dành cho việc truy cập nhanh, xem và tương tác với các bảng dữ liệu đã được chia sẻ hoặc xuất bản.",
+      "Truy cập các trang dữ liệu đã xuất bản hoặc được chia sẻ với bạn.",
     Icon: TableIcon,
   },
 ];
 
-export default function WorkspacePicker() {
+function CheckIcon(props: IconProps) {
   return (
-    <main className="min-h-screen bg-[#f8f7fb] text-slate-900">
-      <header className="border-b border-slate-100 bg-white">
-        <div className="mx-auto flex h-14 w-full max-w-[1240px] items-center justify-between px-5 sm:px-6 lg:px-8">
-          <Link
-            className="text-base font-black tracking-tight text-blue-900"
-            href="/"
-          >
-            SheetToWeb
-          </Link>
+    <svg aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="m5 12 4 4L19 6" />
+    </svg>
+  );
+}
 
+const sampleRows = [
+  { name: "Website", team: "Thiết kế", complete: true },
+  { name: "Nội dung", team: "Marketing", complete: false },
+  { name: "Vận hành", team: "Sản phẩm", complete: true },
+];
+
+function PublishingIllustration() {
+  return (
+    <figure className={styles.illustration}>
+      <div className={styles.canvas} aria-hidden="true">
+        <div className={styles.sheetWindow}>
+          <div className={styles.sheetTitle}>
+            <TableIcon className={styles.sheetIcon} />
+            <span>Bảng tính của bạn</span>
+            <span className={styles.sheetMenu}><i /><i /><i /></span>
+          </div>
+          <div className={styles.sheetTabs}>
+            <span className={styles.activeTab}>Tổng quan dự án</span>
+            <span>Dữ liệu</span>
+            <span>+</span>
+          </div>
+          <div className={styles.sheetGrid}>
+            <div className={styles.columnLabels}><span /><span>A</span><span>B</span><span>C</span></div>
+            <div className={styles.gridRow}><span>1</span><strong>Dự án</strong><strong>Phụ trách</strong><strong>Tiến độ</strong></div>
+            {sampleRows.map((row, index) => (
+              <div className={styles.gridRow} key={row.name}>
+                <span>{index + 2}</span><span>{row.name}</span><span>{row.team}</span>
+                <span><i className={row.complete ? styles.cellComplete : styles.cellProgress} /></span>
+              </div>
+            ))}
+            <div className={styles.gridRow}><span>5</span><span /><span /><span /></div>
+          </div>
+          <div className={styles.sheetBottom}><span className={styles.selectionDot} />Google Sheets</div>
+        </div>
+
+        <div className={styles.connector}>
+          <span className={styles.connectorLine} />
+          <span className={styles.transformMark}><BrandMark /></span>
+          <span className={styles.connectorLabel}>Từ bảng tính đến trang web</span>
+          <svg viewBox="0 0 110 90" fill="none"><path d="M1 1h42a12 12 0 0 1 12 12v52a12 12 0 0 0 12 12h38" /><path d="m98 70 7 7-7 7" /></svg>
+        </div>
+
+        <div className={styles.publishedWindow}>
+          <div className={styles.browserBar}>
+            <span className={styles.browserDots}><i /><i /><i /></span>
+            <span className={styles.address}><span className={styles.lockIcon} />Trang dữ liệu của bạn</span>
+          </div>
+          <div className={styles.publishedContent}>
+            <div className={styles.publishedHeading}>
+              <span className={styles.projectIcon}><TableIcon /></span>
+              <span className={styles.publishedBadge}><CheckIcon />Đã xuất bản</span>
+            </div>
+            <h2>Tổng quan dự án</h2>
+            <p>Mọi thông tin, trong một giao diện rõ ràng.</p>
+            <div className={styles.publishedTable}>
+              <div className={styles.publishedTableHeader}><span>Dự án</span><span>Phụ trách</span><span>Tiến độ</span></div>
+              {sampleRows.map((row) => (
+                <div className={styles.publishedRow} key={row.name}>
+                  <span>{row.name}</span><span>{row.team}</span>
+                  <span className={row.complete ? styles.statusComplete : styles.statusProgress}>{row.complete ? "Hoàn tất" : "Đang làm"}</span>
+                </div>
+              ))}
+            </div>
+            <div className={styles.publishedFooter}><BrandMark /><span>Được tạo với Sheet2Web</span></div>
+          </div>
+        </div>
+      </div>
+      <figcaption className={styles.figureCaption}>
+        <span className={styles.captionLine} />
+        Minh họa bảng tính được xuất bản thành trang dữ liệu
+      </figcaption>
+    </figure>
+  );
+}
+
+export default function WorkspacePicker({ className = "" }: { className?: string }) {
+  return (
+    <div className={`${styles.workspace} ${className}`} lang="vi">
+      <a className={styles.skipLink} href="#workspace-content">Đến nội dung chính</a>
+      <header className={styles.header}>
+        <div className={styles.headerInner}>
+          <AppLink className={styles.brand} href="/" aria-label="Sheet2Web, trang chủ">
+            <BrandMark className={styles.brandMark} />
+            <span>Sheet2Web</span>
+          </AppLink>
+          <span className={styles.headerLabel}>Không gian làm việc</span>
           <button
-            className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-xs font-bold text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
-            onClick={() => signOut({ callbackUrl: "/sign-in" })}
+            className={styles.logout}
+            onClick={() => signOut({ callbackUrl: appPath("/sign-in") })}
             type="button"
           >
-            <LogoutIcon className="h-4 w-4" />
+            <LogoutIcon />
             Đăng xuất
           </button>
         </div>
       </header>
 
-      <section className="mx-auto flex min-h-[calc(100vh-3.5rem)] w-full max-w-[1240px] flex-col items-center justify-center px-5 py-12 sm:px-6 lg:px-8">
-        <div className="w-full max-w-4xl">
-          <div className="text-center">
-            <h1 className="text-2xl font-black text-slate-900 sm:text-3xl">
-              Chào mừng trở lại!
-            </h1>
-            <p className="mt-2 text-sm font-semibold text-slate-500">
-              Vui lòng chọn không gian làm việc để tiếp tục
-            </p>
-          </div>
+      <main className={styles.main} id="workspace-content" tabIndex={-1}>
+        <section className={styles.intro} aria-labelledby="workspace-heading">
+          <p className={styles.welcome}>Chào mừng trở lại</p>
+          <h1 id="workspace-heading">Không gian làm việc<br className={styles.desktopBreak} /> cho dữ liệu của bạn.</h1>
+          <p className={styles.description}>Biến Google Sheets thành những trang dữ liệu rõ ràng, dễ truy cập và sẵn sàng để chia sẻ.</p>
 
-          <div className="mt-8 grid gap-5 md:grid-cols-2">
-            {workspaceOptions.map(({ href, title, description, Icon }) => (
-              <Link
-                className="group flex min-h-[220px] flex-col rounded-lg border border-slate-200 bg-white p-7 shadow-[0_8px_24px_rgba(15,23,42,0.04)] transition-colors hover:border-blue-200 hover:bg-blue-50/30"
+          <nav className={styles.options} aria-label="Chọn không gian làm việc">
+            {workspaceOptions.map(({ href, title, description, Icon }, index) => (
+              <AppLink
+                className={`${styles.option} ${index === 0 ? styles.ownerOption : styles.viewerOption}`}
                 href={href}
                 key={href}
               >
-                <span className="flex h-11 w-11 items-center justify-center rounded-md bg-blue-50 text-blue-700 ring-1 ring-blue-100">
-                  <Icon className="h-6 w-6" />
-                </span>
-
-                <div className="mt-8">
-                  <h2 className="text-xl font-black text-slate-900">
-                    {title}
-                  </h2>
-                  <p className="mt-2 min-h-[48px] text-sm font-semibold leading-6 text-slate-500">
-                    {description}
-                  </p>
+                <span className={styles.optionIcon}><Icon /></span>
+                <div className={styles.optionContent}>
+                  <h2 className={styles.optionTitle}>{title}</h2>
+                  <p className={styles.optionDescription}>{description}</p>
                 </div>
-
-                <span className="mt-7 inline-flex items-center gap-2 text-sm font-black text-blue-700 transition-colors group-hover:text-blue-800">
-                  Truy cập
-                  <ArrowRightIcon className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                </span>
-              </Link>
+                <span className={styles.optionArrow}><ArrowRightIcon /></span>
+              </AppLink>
             ))}
-          </div>
-        </div>
-      </section>
-    </main>
+          </nav>
+          <p className={styles.switchHint}><CheckIcon />Bạn có thể đổi không gian làm việc bất cứ lúc nào.</p>
+        </section>
+        <PublishingIllustration />
+      </main>
+
+      <footer className={styles.footer}>
+        <span>Từ bảng tính đến trải nghiệm web.</span>
+        <ol className={styles.workflow} aria-label="Quy trình xuất bản dữ liệu">
+          <li>Kết nối<ArrowRightIcon /></li>
+          <li>Tùy chỉnh<ArrowRightIcon /></li>
+          <li>Chia sẻ</li>
+        </ol>
+      </footer>
+    </div>
   );
 }

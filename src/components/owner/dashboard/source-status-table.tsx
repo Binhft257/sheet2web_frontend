@@ -1,6 +1,8 @@
 import type { DataSource } from "@/src/types/data-source";
-import Link from "next/link";
+import AppLink from "@/src/components/app-link";
 import type { ReactElement, SVGProps } from "react";
+import EmptyState from "@/src/components/common/empty-state";
+import StatusBadge, { type StatusTone } from "@/src/components/common/status-badge";
 
 type SourceStatusTableProps = {
   dataSources: DataSource[];
@@ -10,13 +12,11 @@ type SourceStatusTableProps = {
 
 type StatusPresentation = {
   label: string;
-  className: string;
-  dotClassName: string;
+  tone: StatusTone;
 };
 
 type SourceTypePresentation = {
   label: string;
-  className: string;
   icon: (props: SVGProps<SVGSVGElement>) => ReactElement;
 };
 
@@ -25,28 +25,23 @@ const MAX_VISIBLE_SOURCES = 5;
 const statusMap: Record<string, StatusPresentation> = {
   active: {
     label: "Hoạt động",
-    className: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
-    dotClassName: "bg-emerald-500",
+    tone: "success",
   },
   inactive: {
     label: "Tạm dừng",
-    className: "bg-slate-100 text-slate-700 ring-1 ring-slate-200",
-    dotClassName: "bg-slate-500",
+    tone: "neutral",
   },
   syncing: {
     label: "Đang đồng bộ",
-    className: "bg-blue-50 text-blue-700 ring-1 ring-blue-200",
-    dotClassName: "bg-blue-500",
+    tone: "info",
   },
   error: {
     label: "Lỗi",
-    className: "bg-brown-50 text-brown-700 ring-1 ring-brown-200",
-    dotClassName: "bg-brown-500",
+    tone: "danger",
   },
   draft: {
     label: "Bản nháp",
-    className: "bg-amber-50 text-amber-700 ring-1 ring-amber-200",
-    dotClassName: "bg-amber-500",
+    tone: "warning",
   },
 };
 
@@ -145,8 +140,7 @@ function getStatusPresentation(status: string): StatusPresentation {
   return (
     statusMap[normalized] ?? {
       label: status || "Không xác định",
-      className: "bg-slate-100 text-slate-700 ring-1 ring-slate-200",
-      dotClassName: "bg-slate-500",
+      tone: "neutral",
     }
   );
 }
@@ -157,7 +151,6 @@ function getSourceTypePresentation(sourceType: string): SourceTypePresentation {
   if (normalized === "google_sheet" || normalized === "google sheets") {
     return {
       label: "Google Sheets",
-      className: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100",
       icon: SheetIcon,
     };
   }
@@ -165,7 +158,6 @@ function getSourceTypePresentation(sourceType: string): SourceTypePresentation {
   if (normalized === "csv") {
     return {
       label: "CSV Upload",
-      className: "bg-amber-50 text-amber-700 ring-1 ring-amber-100",
       icon: FileIcon,
     };
   }
@@ -173,14 +165,12 @@ function getSourceTypePresentation(sourceType: string): SourceTypePresentation {
   if (normalized === "excel") {
     return {
       label: "Excel",
-      className: "bg-blue-50 text-blue-700 ring-1 ring-blue-100",
       icon: FileIcon,
     };
   }
 
   return {
     label: sourceType || "Nguồn dữ liệu",
-    className: "bg-slate-100 text-slate-700 ring-1 ring-slate-200",
     icon: FileIcon,
   };
 }
@@ -188,20 +178,17 @@ function getSourceTypePresentation(sourceType: string): SourceTypePresentation {
 function LoadingBody() {
   return (
     <>
-      {Array.from({ length: 5 }).map((_, index) => (
-        <tr className="border-b border-slate-100" key={`row-loading-${index}`}>
-          <td className="px-6 py-5">
-            <div className="h-6 w-56 animate-pulse rounded bg-slate-200" />
+      {Array.from({ length: 5 }).map((_, rowIndex) => (
+        <tr key={`row-loading-${rowIndex}`} aria-hidden="true">
+          <td>
+            <div className="flex items-center gap-3">
+              <span className="ui-skeleton h-11 w-10 shrink-0" />
+              <span className="space-y-2"><span className="ui-skeleton h-4 w-36" /><span className="ui-skeleton h-3 w-16" /></span>
+            </div>
           </td>
-          <td className="px-6 py-5">
-            <div className="h-8 w-36 animate-pulse rounded-full bg-slate-200" />
-          </td>
-          <td className="px-6 py-5">
-            <div className="h-6 w-32 animate-pulse rounded bg-slate-200" />
-          </td>
-          <td className="px-6 py-5">
-            <div className="h-8 w-32 animate-pulse rounded-full bg-slate-200" />
-          </td>
+          <td><span className="ui-skeleton h-5 w-24" /></td>
+          <td><span className="ui-skeleton h-5 w-24" /></td>
+          <td><span className="ui-skeleton h-7 w-24" /></td>
         </tr>
       ))}
     </>
@@ -216,105 +203,67 @@ export default function SourceStatusTable({
   const visibleDataSources = dataSources.slice(0, MAX_VISIBLE_SOURCES);
 
   return (
-    <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
-      <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-        <h2 className="text-base font-bold text-slate-900">
-          Trạng thái kết nối nguồn
-        </h2>
-        <Link
-          className="text-sm font-semibold text-blue-700 transition-colors hover:text-blue-800"
-          href="/owner/data-sources"
-        >
-          Xem tất cả
-        </Link>
+    <section className="ui-panel" aria-labelledby="source-status-heading" aria-busy={isLoading}>
+      <div className="ui-panel-header">
+        <div>
+          <h2 id="source-status-heading">Trạng thái kết nối nguồn</h2>
+          <p>Các nguồn dữ liệu trong không gian làm việc của bạn.</p>
+        </div>
+        <AppLink className="ui-link" href="/owner/data-sources">Xem tất cả</AppLink>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="min-w-full text-left">
-          <thead className="bg-[#f5f5fa]">
-            <tr className="border-b border-slate-100">
-              <th className="px-6 py-5 text-sm font-bold text-slate-500">
-                Tên nguồn
-              </th>
-              <th className="px-6 py-5 text-sm font-bold text-slate-500">
-                Loại
-              </th>
-              <th className="px-6 py-5 text-sm font-bold text-slate-500">
-                Cập nhật cuối
-              </th>
-              <th className="px-6 py-5 text-sm font-bold text-slate-500">
-                Trạng thái
-              </th>
-            </tr>
-          </thead>
-          <tbody className="text-sm text-slate-700">
-            {isLoading ? (
-              <LoadingBody />
-            ) : errorMessage ? (
-              <tr>
-                <td className="px-6 py-10 text-center text-sm text-brown-700" colSpan={4}>
-                  {errorMessage}
-                </td>
-              </tr>
-            ) : visibleDataSources.length === 0 ? (
-              <tr>
-                <td className="px-6 py-10 text-center text-sm text-slate-500" colSpan={4}>
-                  Chưa có nguồn dữ liệu nào.
-                </td>
-              </tr>
-            ) : (
-              visibleDataSources.map((source) => {
-                const status = getStatusPresentation(source.sourceStatus);
-                const type = getSourceTypePresentation(source.sourceType);
-                const TypeIcon = type.icon;
-                const lastUpdatedAt =
-                  source.lastSyncedStructureAt ?? source.updatedAt ?? null;
+      {!isLoading && errorMessage ? (
+        <EmptyState title="Không thể tải nguồn dữ liệu" description={errorMessage} icon={<FileIcon />} />
+      ) : !isLoading && visibleDataSources.length === 0 ? (
+        <EmptyState
+          title="Chưa có nguồn dữ liệu nào"
+          description="Kết nối Google Sheets trong mục Nguồn dữ liệu để bắt đầu tạo view."
+          icon={<SheetIcon />}
+        />
+      ) : (
+        <>
+          {isLoading ? <span className="sr-only" role="status">Đang tải nguồn dữ liệu</span> : null}
+          <div className="ui-table-region" tabIndex={0} role="region" aria-label="Bảng trạng thái nguồn dữ liệu, có thể cuộn ngang">
+            <table className="ui-table">
+              <caption className="sr-only">Trạng thái kết nối của tối đa 5 nguồn dữ liệu hiện tại</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Tên nguồn</th>
+                  <th scope="col">Loại</th>
+                  <th scope="col">Cập nhật cuối</th>
+                  <th scope="col">Trạng thái</th>
+                </tr>
+              </thead>
+              <tbody>
+                {isLoading ? <LoadingBody /> : visibleDataSources.map((source) => {
+                  const status = getStatusPresentation(source.sourceStatus);
+                  const type = getSourceTypePresentation(source.sourceType);
+                  const TypeIcon = type.icon;
+                  const lastUpdatedAt = source.lastSyncedStructureAt ?? source.updatedAt ?? null;
 
-                return (
-                  <tr
-                    className="border-b border-slate-100 transition-colors hover:bg-slate-50"
-                    key={source.id}
-                  >
-                    <td className="px-6 py-5">
-                      <div className="flex min-w-[280px] items-center gap-3">
-                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-slate-50 text-slate-500 ring-1 ring-slate-100">
-                          <TypeIcon className="h-5 w-5" />
-                        </span>
-                        <div className="min-w-0">
-                          <p className="truncate font-semibold text-slate-900">
-                            {source.title}
-                          </p>
-                          <p className="mt-1 text-sm font-medium text-slate-400">
-                            {source.sheetCount} sheet
-                          </p>
+                  return (
+                    <tr key={source.id}>
+                      <td>
+                        <div className="flex min-w-[200px] items-center gap-3">
+                          <span className="ui-source-icon"><TypeIcon /></span>
+                          <div className="min-w-0 max-w-80">
+                            <p className="font-medium break-words text-ink">{source.title}</p>
+                            <p className="mt-1 text-xs text-muted">{source.sheetCount} sheet</p>
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-5">
-                      <span
-                        className={`inline-flex items-center rounded-full px-3 py-1.5 text-sm font-semibold ${type.className}`}
-                      >
-                        {type.label}
-                      </span>
-                    </td>
-                    <td className="px-6 py-5 font-medium text-slate-500">
-                      {formatRelativeDateTime(lastUpdatedAt)}
-                    </td>
-                    <td className="px-6 py-5">
-                      <span
-                        className={`inline-flex items-center gap-2.5 rounded-full px-3.5 py-2 text-sm font-semibold ${status.className}`}
-                      >
-                        <span className={`h-2.5 w-2.5 rounded-full ${status.dotClassName}`} />
-                        {status.label}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
+                      </td>
+                      <td><span className="whitespace-nowrap">{type.label}</span></td>
+                      <td><span className="whitespace-nowrap" title={formatDateTime(lastUpdatedAt)}>{formatRelativeDateTime(lastUpdatedAt)}</span></td>
+                      <td><StatusBadge tone={status.tone}>{status.label}</StatusBadge></td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          <p className="border-t border-line px-5 py-3 text-xs text-muted sm:hidden">Cuộn ngang để xem đầy đủ thông tin.</p>
+        </>
+      )}
     </section>
   );
 }

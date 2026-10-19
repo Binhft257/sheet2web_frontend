@@ -2,6 +2,7 @@
 
 import { apiClient } from "@/src/lib/api";
 import { signOut } from "next-auth/react";
+import { appPath } from "@/src/lib/app-path";
 import { useEffect, useRef } from "react";
 
 export default function AuthExpiredHandler() {
@@ -20,7 +21,7 @@ export default function AuthExpiredHandler() {
           !isSigningOutRef.current
         ) {
           isSigningOutRef.current = true;
-          await signOut({ callbackUrl: "/sign-in" });
+          await signOut({ callbackUrl: appPath("/sign-in") });
         }
 
         return Promise.reject(error);

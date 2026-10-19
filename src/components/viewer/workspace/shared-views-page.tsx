@@ -11,6 +11,7 @@ import {
   getViewUrl,
 } from "@/src/components/viewer/workspace/viewer-shared-view-ui";
 import { useViewerViews } from "@/src/hooks/viewer/use-viewer-workspace";
+import { pushAppPath } from "@/src/lib/app-path";
 import type { PaginationMeta } from "@/src/types/pagination";
 import type { ViewerSharedView } from "@/src/types/viewer";
 import { useRouter } from "next/navigation";
@@ -284,7 +285,7 @@ export default function SharedViewsPage() {
                 views.map((view) => (
                   <SharedViewRow
                     key={view.id}
-                    onOpen={(item) => router.push(getViewUrl(item))}
+                    onOpen={(item) => pushAppPath(router, getViewUrl(item))}
                     view={view}
                   />
                 ))

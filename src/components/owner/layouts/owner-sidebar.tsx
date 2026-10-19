@@ -1,8 +1,11 @@
 "use client";
 
-import Link from "next/link";
+import AppLink from "@/src/components/app-link";
+import { internalPath } from "@/src/lib/app-path";
 import { usePathname } from "next/navigation";
 import type { ReactElement, SVGProps } from "react";
+import { useEffect, useRef } from "react";
+import BrandMark from "@/src/components/common/brand-mark";
 
 type IconProps = SVGProps<SVGSVGElement>;
 
@@ -167,84 +170,112 @@ export default function OwnerSidebar({
   mobileOpen = false,
   onMobileClose,
 }: OwnerSidebarProps) {
-  const pathname = usePathname();
+  const pathname = internalPath(usePathname());
+  const mobilePanelRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    const previousOverflow = document.body.style.overflow;
+    const desktop = window.matchMedia("(min-width: 1024px)");
+    document.body.style.overflow = "hidden";
+    mobilePanelRef.current?.querySelector<HTMLButtonElement>("button")?.focus();
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onMobileClose?.();
+      }
+      if (event.key !== "Tab") return;
+      const controls = mobilePanelRef.current?.querySelectorAll<HTMLElement>("a[href], button:not([disabled])");
+      if (!controls?.length) return;
+      const first = controls[0];
+      const last = controls[controls.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+    function handleDesktopChange(event: MediaQueryListEvent) {
+      if (event.matches) onMobileClose?.();
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    desktop.addEventListener("change", handleDesktopChange);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", handleKeyDown);
+      desktop.removeEventListener("change", handleDesktopChange);
+      previouslyFocused?.focus();
+    };
+  }, [mobileOpen, onMobileClose]);
 
   const renderContent = () => (
     <>
-      <div className="border-b border-slate-100 px-5 py-5">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-md bg-blue-700 text-white shadow-[0_8px_18px_rgba(30,58,138,0.2)]">
-            <DatabaseIcon className="h-5 w-5" />
-          </div>
-          <div className="min-w-0">
-            <p className="truncate text-base font-black tracking-tight text-blue-900">
-              Sheet2Web
-            </p>
-            <p className="truncate text-sm font-medium text-slate-500">
-              Quản trị hệ thống
-            </p>
-          </div>
-        </div>
+      <div className="flex min-h-20 items-center border-b border-line px-6">
+        <AppLink className="ui-brand" href="/" aria-label="Sheet2Web, chọn không gian làm việc" onClick={onMobileClose}>
+          <BrandMark />
+          <span>Sheet2Web</span>
+        </AppLink>
       </div>
 
-      <nav className="flex-1 px-4 py-5">
-        <ul className="space-y-2">
+      <nav className="flex-1 overflow-y-auto px-4 py-7" aria-label="Điều hướng quản lý">
+        <p className="mb-4 px-3.5 text-xs text-muted">Không gian quản lý</p>
+        <ul className="space-y-1.5">
           {navigationItems.map(({ href, label, Icon }) => {
             const active = isActiveRoute(pathname, href);
             return (
               <li key={href}>
-                <Link
-                  className={`relative flex h-12 items-center gap-3 rounded-md px-3 text-sm font-semibold transition-colors ${
-                    active
-                      ? "bg-blue-50 text-blue-900"
-                      : "text-slate-600 hover:bg-slate-50 hover:text-blue-900"
-                  }`}
+                <AppLink
+                  className="ui-nav-link"
+                  aria-current={active ? "page" : undefined}
                   href={href}
                   onClick={onMobileClose}
                 >
                   <Icon className="h-5 w-5 shrink-0" />
                   <span className="truncate">{label}</span>
-                  {active ? (
-                    <span className="absolute right-0 top-2.5 h-7 w-1 rounded-l-full bg-blue-700" />
-                  ) : null}
-                </Link>
+                </AppLink>
               </li>
             );
           })}
         </ul>
       </nav>
 
-      <div className="border-t border-slate-100 p-4">
-        <Link
-          className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-4 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
+      <div className="border-t border-line p-4">
+        <AppLink
+          className="ui-button w-full"
+          data-variant="outlined"
+          aria-label="Đổi không gian làm việc"
           href="/"
           onClick={onMobileClose}
         >
           <WorkspaceSwitchIcon className="h-5 w-5" />
-          Đổi workspace
-        </Link>
+          Đổi không gian
+        </AppLink>
       </div>
     </>
   );
 
   return (
     <>
-      <aside className="hidden h-screen w-64 shrink-0 border-r border-slate-100 bg-white shadow-[1px_0_3px_rgba(15,23,42,0.04)] lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:flex-col">
+      <aside className="fixed inset-y-0 left-0 z-40 hidden h-dvh w-64 flex-col border-r border-line bg-surface lg:flex">
         {renderContent()}
       </aside>
 
       {mobileOpen ? (
-        <div className="fixed inset-0 z-50 lg:hidden">
+        <div className="ui-mobile-overlay lg:hidden">
           <button
             aria-label="Đóng menu"
-            className="absolute inset-0 h-full w-full cursor-default bg-slate-900/45"
+            className="ui-mobile-backdrop"
             onClick={onMobileClose}
             type="button"
           />
-          <aside className="relative flex h-full w-[min(18rem,calc(100vw-2rem))] flex-col border-r border-slate-100 bg-white shadow-[16px_0_45px_rgba(15,23,42,0.18)]">
+          <aside className="ui-mobile-panel" id="owner-mobile-navigation" role="dialog" aria-modal="true" aria-label="Menu quản lý" ref={mobilePanelRef}>
             <button
               aria-label="Đóng menu"
-              className="absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
+              className="ui-icon-button absolute right-3 top-[18px]"
               onClick={onMobileClose}
               type="button"
             >

@@ -8,6 +8,7 @@ import {
   getViewUrl,
 } from "@/src/components/viewer/workspace/viewer-shared-view-ui";
 import { useViewerDashboard } from "@/src/hooks/viewer/use-viewer-workspace";
+import { pushAppPath } from "@/src/lib/app-path";
 import type { ViewerSharedView } from "@/src/types/viewer";
 import { useRouter } from "next/navigation";
 import type { SVGProps } from "react";
@@ -173,7 +174,7 @@ export default function ViewerDashboard() {
 
         <button
           className="inline-flex h-11 items-center justify-center rounded-md border border-blue-700 bg-blue-700 px-5 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(30,58,138,0.18)] transition-colors hover:border-blue-800 hover:bg-blue-800"
-          onClick={() => router.push("/viewer/shared")}
+          onClick={() => pushAppPath(router, "/viewer/shared")}
           type="button"
         >
           Xem tất cả
@@ -217,7 +218,7 @@ export default function ViewerDashboard() {
             {recentViews.map((view) => (
               <RecentViewItem
                 key={view.id}
-                onOpen={(item) => router.push(getViewUrl(item))}
+                onOpen={(item) => pushAppPath(router, getViewUrl(item))}
                 view={view}
               />
             ))}

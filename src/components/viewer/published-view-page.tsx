@@ -9,7 +9,7 @@ import SharedViewRender, {
 import { usePublishedView } from "@/src/hooks/viewer/use-published-view";
 import { ViewBySlugError } from "@/src/services/view.service";
 import type { ThemePreset, ViewJsonObject } from "@/src/types/view";
-import Link from "next/link";
+import AppLink from "@/src/components/app-link";
 import { useEffect, useMemo, useState } from "react";
 
 type PublishedViewPageProps = {
@@ -98,12 +98,12 @@ function ErrorState({ status }: { status?: number }) {
       <div className="mx-auto mt-20 max-w-xl rounded-lg border border-slate-200 bg-white px-6 py-10 text-center shadow-[0_18px_60px_rgba(15,23,42,0.10)]">
         <p className="text-2xl font-bold text-slate-900">{title}</p>
         {status === 403 ? (
-          <Link
+          <AppLink
             className="mt-6 inline-flex h-11 items-center justify-center rounded-md border border-blue-700 bg-blue-700 px-6 text-base font-bold text-white transition-colors hover:border-blue-800 hover:bg-blue-800"
             href="/sign-in"
           >
             Đăng nhập
-          </Link>
+          </AppLink>
         ) : null}
       </div>
     </ViewerShell>

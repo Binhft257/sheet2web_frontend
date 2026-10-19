@@ -28,7 +28,8 @@ import type {
   ViewStatusFilter,
 } from "@/src/types/view";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import Link from "next/link";
+import AppLink from "@/src/components/app-link";
+import { appPath, pushAppPath } from "@/src/lib/app-path";
 import { useRouter } from "next/navigation";
 import type { ChangeEvent, FormEvent, SVGProps } from "react";
 import { useMemo, useState } from "react";
@@ -198,7 +199,7 @@ function getPublishedUrl(view: OwnerView) {
     return null;
   }
 
-  return view.publicUrl || `/v/${view.slug}`;
+  return appPath(view.publicUrl || `/v/${view.slug}`);
 }
 
 function getAbsoluteUrl(url: string) {
@@ -206,7 +207,7 @@ function getAbsoluteUrl(url: string) {
     return url;
   }
 
-  return new URL(url, window.location.origin).toString();
+  return new URL(appPath(url), window.location.origin).toString();
 }
 
 function getPermissionUserName(permission: ViewPermission) {
@@ -598,11 +599,11 @@ function SharingModal({
 
   function getShareTokenUrl(token: ViewShareToken) {
     if (token.url || token.shareUrl) {
-      return token.url ?? token.shareUrl ?? "";
+      return appPath(token.url ?? token.shareUrl ?? "");
     }
 
     if (token.token) {
-      return `/v/${activeView.slug}?shareToken=${encodeURIComponent(token.token)}`;
+      return appPath(`/v/${activeView.slug}?shareToken=${encodeURIComponent(token.token)}`);
     }
 
     return "";
@@ -1100,13 +1101,13 @@ export default function ViewList() {
           </p>
         </div>
 
-        <Link
+        <AppLink
           className="inline-flex h-11 items-center justify-center gap-2.5 rounded-md border border-blue-700 bg-blue-700 px-5 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(30,58,138,0.18)] transition-colors hover:border-blue-800 hover:bg-blue-800"
           href="/owner/views/new"
         >
           <PlusIcon className="h-5 w-5" />
           Tạo View mới
-        </Link>
+        </AppLink>
       </header>
 
       <div className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.04)] lg:grid-cols-[minmax(260px,1fr)_200px_200px]">
@@ -1206,7 +1207,7 @@ export default function ViewList() {
                       </p>
                       <button
                         className="mt-5 inline-flex h-11 items-center justify-center rounded-md border border-blue-700 bg-blue-700 px-5 text-sm font-bold text-white transition-colors hover:border-blue-800 hover:bg-blue-800"
-                        onClick={() => router.push("/owner/views/new")}
+                        onClick={() => pushAppPath(router, "/owner/views/new")}
                         type="button"
                       >
                         Tạo View mới
@@ -1291,7 +1292,8 @@ export default function ViewList() {
                             <button
                               className={SECONDARY_VIEW_ACTION_CLASS}
                               onClick={() =>
-                                router.push(
+                                pushAppPath(
+                                  router,
                                   `/owner/views/new?viewId=${view.id}&step=2`,
                                 )
                               }

@@ -39,6 +39,7 @@ import type {
   ViewJsonObject,
 } from "@/src/types/view";
 import { useQueryClient } from "@tanstack/react-query";
+import { appPath, pushAppPath } from "@/src/lib/app-path";
 import { useRouter } from "next/navigation";
 import type { ChangeEvent, SVGProps } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -206,7 +207,7 @@ function replaceWizardUrl(viewId: string | null, step: WizardStep) {
   }
   params.set("step", String(step));
 
-  window.history.replaceState(null, "", `/owner/views/new?${params.toString()}`);
+  window.history.replaceState(null, "", appPath(`/owner/views/new?${params.toString()}`));
 }
 
 function formatDate(dateTime: string | null | undefined) {
@@ -415,7 +416,7 @@ export default function CreateViewWizard({
     });
     setAccessMode(view.accessMode === "private" ? "private" : "public");
     setPublishedSlug(view.status === "published" ? view.slug : null);
-    setPublishedUrl(view.status === "published" ? `/v/${view.slug}` : null);
+    setPublishedUrl(view.status === "published" ? appPath(`/v/${view.slug}`) : null);
   }, [hydratedViewId, viewQuery.data]);
 
   useEffect(() => {
@@ -441,7 +442,7 @@ export default function CreateViewWizard({
     }
 
     if (publishedSlug) {
-      return `/v/${publishedSlug}`;
+      return appPath(`/v/${publishedSlug}`);
     }
 
     return "Sẽ có sau khi xuất bản";
@@ -696,7 +697,7 @@ export default function CreateViewWizard({
       }
 
       const publishResult = await publishViewMutation.mutateAsync(activeViewId);
-      setPublishedUrl(publishResult.url);
+      setPublishedUrl(appPath(publishResult.url));
       setPublishedSlug(publishResult.slug);
       showToast("success", "Xuất bản view thành công.");
       await queryClient.invalidateQueries({ queryKey: ["views"] });
@@ -706,7 +707,7 @@ export default function CreateViewWizard({
   }
 
   async function handleCopyLink() {
-    const url = publishedUrl ?? (publishedSlug ? `/v/${publishedSlug}` : null);
+    const url = publishedUrl ?? (publishedSlug ? appPath(`/v/${publishedSlug}`) : null);
     if (!url) {
       return;
     }
@@ -723,7 +724,7 @@ export default function CreateViewWizard({
   }
 
   function handleOpenView() {
-    const url = publishedUrl ?? (publishedSlug ? `/v/${publishedSlug}` : null);
+    const url = publishedUrl ?? (publishedSlug ? appPath(`/v/${publishedSlug}`) : null);
     if (!url || typeof window === "undefined") {
       return;
     }
@@ -1126,7 +1127,7 @@ export default function CreateViewWizard({
         </div>
         <button
           className="inline-flex h-11 items-center justify-center rounded-md border border-slate-200 bg-white px-5 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50"
-          onClick={() => router.push("/owner/views")}
+          onClick={() => pushAppPath(router, "/owner/views")}
           type="button"
         >
           Hủy bỏ

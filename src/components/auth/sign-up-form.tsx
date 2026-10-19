@@ -1,7 +1,8 @@
 ﻿'use client';
 
 import { SharedButton } from '@/src/components/share';
-import Link from 'next/link';
+import AppLink from '@/src/components/app-link';
+import { appPath, pushAppPath } from '@/src/lib/app-path';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FocusEvent, type FormEvent } from 'react';
 import { z } from 'zod';
@@ -320,7 +321,7 @@ export default function SignUpForm() {
     setIsSubmitting(true);
 
     try {
-      const registerResponse = await fetch('/api/auth/register', {
+      const registerResponse = await fetch(appPath('/api/auth/register'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -353,7 +354,7 @@ export default function SignUpForm() {
 
       window.sessionStorage.removeItem(SIGN_UP_DRAFT_KEY);
       window.localStorage.setItem(`verify-id:${result.data.email.trim().toLowerCase()}`, data.id);
-      router.push(`/verify/${encodeURIComponent(data.id)}`);
+      pushAppPath(router, `/verify/${encodeURIComponent(data.id)}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -540,9 +541,9 @@ export default function SignUpForm() {
 
           <p className='mt-6 text-center text-sm text-slate-600'>
             Đã có tài khoản?{' '}
-            <Link className='font-semibold text-blue-500 underline transition-colors hover:text-blue-600' href='/sign-in'>
+            <AppLink className='font-semibold text-blue-500 underline transition-colors hover:text-blue-600' href='/sign-in'>
               Đăng nhập
-            </Link>
+            </AppLink>
           </p>
         </div>
       </div>

@@ -1,5 +1,6 @@
 import NextAuth, { CredentialsSignin } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import { APP_PREFIX, appPath } from "@/src/lib/app-path";
 
 class AccountNotVerifiedError extends CredentialsSignin {
   constructor(userId?: string) {
@@ -48,6 +49,7 @@ function extractUserId(errorData: LoginErrorResponse | null) {
 }
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  basePath: "/api/auth",
   providers: [
     Credentials({
       credentials: {
@@ -109,6 +111,24 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   ],
 
   callbacks: {
+    redirect({ url, baseUrl }) {
+      const destination = new URL(url, baseUrl);
+      const appRoot = `${baseUrl}${appPath("/")}`;
+
+      if (destination.origin !== baseUrl) {
+        return appRoot;
+      }
+
+      if (APP_PREFIX) {
+        if (destination.pathname === APP_PREFIX) {
+          destination.pathname = `${APP_PREFIX}/`;
+        } else if (!destination.pathname.startsWith(`${APP_PREFIX}/`)) {
+          destination.pathname = `${APP_PREFIX}${destination.pathname}`;
+        }
+      }
+
+      return destination.toString();
+    },
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
@@ -127,6 +147,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
 
   pages: {
-    signIn: "/sign-in",
+    signIn: appPath("/sign-in"),
   },
 });

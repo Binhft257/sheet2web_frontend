@@ -1,7 +1,8 @@
 "use client";
 
 import { SharedButton } from "@/src/components/share";
-import Link from "next/link";
+import AppLink from "@/src/components/app-link";
+import { appPath, pushAppPath } from "@/src/lib/app-path";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 
@@ -99,7 +100,7 @@ export default function VerifyCodeForm({ verifyId }: VerifyCodeFormProps) {
         code: trimmedCode,
       });
 
-      const response = await fetch("/api/auth/check-code", {
+      const response = await fetch(appPath("/api/auth/check-code"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -128,7 +129,7 @@ export default function VerifyCodeForm({ verifyId }: VerifyCodeFormProps) {
       }
 
       window.sessionStorage.removeItem(draftKey);
-      router.push("/sign-in?registered=1");
+      pushAppPath(router, "/sign-in?registered=1");
     } catch {
       setSubmitError("Xác minh thất bại. Vui lòng thử lại.");
     } finally {
@@ -181,12 +182,12 @@ export default function VerifyCodeForm({ verifyId }: VerifyCodeFormProps) {
         <p className="text-sm text-blue-600">{submitMessage}</p>
       ) : null}
 
-      <Link
+      <AppLink
         className="inline-flex text-sm font-medium text-blue-500 underline transition-colors hover:text-blue-600"
         href="/sign-in"
       >
         Quay lại đăng nhập
-      </Link>
+      </AppLink>
     </form>
   );
 }

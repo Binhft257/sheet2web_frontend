@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
+import { appPath } from "@/src/lib/app-path";
 
 export default function Page() {
-  redirect("/viewer/dashboard");
+  redirect(appPath("/viewer/dashboard"));
 }

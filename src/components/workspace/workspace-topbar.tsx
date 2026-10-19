@@ -3,10 +3,13 @@
 import { getUserProfile } from "@/src/services/profile.service";
 import { useQuery } from "@tanstack/react-query";
 import { signOut } from "next-auth/react";
-import { useEffect, useRef, useState } from "react";
+import { appPath } from "@/src/lib/app-path";
+import { useEffect, useId, useRef, useState } from "react";
 
 type WorkspaceTopbarProps = {
   onMenuClick?: () => void;
+  menuOpen?: boolean;
+  menuId?: string;
   title: string;
 };
 
@@ -37,9 +40,13 @@ function MenuIcon() {
 
 export default function WorkspaceTopbar({
   onMenuClick,
+  menuOpen = false,
+  menuId,
   title,
 }: WorkspaceTopbarProps) {
   const [profileOpen, setProfileOpen] = useState(false);
+  const profileId = useId();
+  const profileButtonRef = useRef<HTMLButtonElement | null>(null);
   const profileRef = useRef<HTMLDivElement | null>(null);
   const profileQuery = useQuery({
     queryKey: ["auth", "profile"],
@@ -62,35 +69,50 @@ export default function WorkspaceTopbar({
       }
     }
 
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setProfileOpen(false);
+        profileButtonRef.current?.focus();
+      }
+    }
     window.addEventListener("pointerdown", handlePointerDown);
-    return () => window.removeEventListener("pointerdown", handlePointerDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("pointerdown", handlePointerDown);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
   }, [profileOpen]);
 
   const profile = profileQuery.data;
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-3 border-b border-slate-100 bg-white/95 px-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] backdrop-blur sm:px-6">
+    <header className="ui-topbar">
       <div className="flex min-w-0 items-center gap-3">
         {onMenuClick ? (
           <button
             aria-label="Mở menu"
-            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900 lg:hidden"
+            aria-expanded={menuOpen}
+            aria-controls={menuId}
+            className="ui-icon-button lg:hidden"
             onClick={onMenuClick}
             type="button"
           >
             <MenuIcon />
           </button>
         ) : null}
-        <span className="block truncate text-sm font-bold text-slate-900">
+        <span className="block truncate text-sm font-medium text-muted" title={title}>
           {title}
         </span>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex shrink-0 items-center gap-3">
         <div className="relative" ref={profileRef}>
           <button
             aria-expanded={profileOpen}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-sm font-black text-emerald-800 ring-2 ring-white transition-colors hover:bg-emerald-200 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+            aria-controls={profileOpen ? profileId : undefined}
+            aria-label="Thông tin người dùng"
+            className="ui-avatar"
+            ref={profileButtonRef}
             onClick={() => setProfileOpen((open) => !open)}
             title="Thông tin người dùng"
             type="button"
@@ -99,26 +121,26 @@ export default function WorkspaceTopbar({
           </button>
 
           {profileOpen ? (
-            <div className="absolute right-0 top-12 w-[calc(100vw-2rem)] max-w-80 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-[0_18px_55px_rgba(15,23,42,0.16)]">
-              <div className="border-b border-slate-100 px-4 py-4">
-                <p className="text-xs font-bold uppercase text-slate-400">
+            <div className="ui-profile-panel" id={profileId} role="region" aria-label="Hồ sơ người dùng">
+              <div className="border-b border-line px-5 py-5">
+                <p className="text-xs font-medium text-muted">
                   Hồ sơ người dùng
                 </p>
                 {profileQuery.isPending ? (
-                  <div className="mt-3 space-y-2">
-                    <div className="h-5 w-40 animate-pulse rounded bg-slate-100" />
-                    <div className="h-4 w-56 animate-pulse rounded bg-slate-100" />
+                  <div className="mt-3 space-y-2" role="status" aria-label="Đang tải hồ sơ">
+                    <div className="ui-skeleton h-5 w-40" />
+                    <div className="ui-skeleton h-4 w-full" />
                   </div>
                 ) : profileQuery.isError ? (
-                  <p className="mt-3 text-sm font-semibold text-red-600">
+                  <p className="mt-3 text-sm text-danger" role="alert">
                     Không thể tải thông tin người dùng.
                   </p>
                 ) : (
                   <div className="mt-3 min-w-0">
-                    <p className="truncate text-base font-black text-slate-900">
+                    <p className="break-words text-base font-semibold text-ink">
                       {getProfileName(profile)}
                     </p>
-                    <p className="mt-1 truncate text-sm font-semibold text-slate-500">
+                    <p className="mt-1 text-sm break-words text-muted [overflow-wrap:anywhere]">
                       {getProfileEmail(profile)}
                     </p>
                   </div>
@@ -126,23 +148,23 @@ export default function WorkspaceTopbar({
               </div>
 
               {!profileQuery.isPending && !profileQuery.isError ? (
-                <dl className="grid gap-3 px-4 py-4">
+                <dl className="grid grid-cols-2 gap-4 px-5 py-4">
                   {profile?.role ? (
                     <div>
-                      <dt className="text-xs font-bold uppercase text-slate-400">
+                      <dt className="text-xs text-muted">
                         Vai trò
                       </dt>
-                      <dd className="mt-1 text-sm font-semibold text-slate-800">
+                      <dd className="mt-1 text-sm font-medium break-words text-ink">
                         {profile.role}
                       </dd>
                     </div>
                   ) : null}
                   {profile?.status ? (
                     <div>
-                      <dt className="text-xs font-bold uppercase text-slate-400">
+                      <dt className="text-xs text-muted">
                         Trạng thái
                       </dt>
-                      <dd className="mt-1 text-sm font-semibold text-slate-800">
+                      <dd className="mt-1 text-sm font-medium break-words text-ink">
                         {profile.status}
                       </dd>
                     </div>
@@ -154,8 +176,9 @@ export default function WorkspaceTopbar({
         </div>
 
         <button
-          className="inline-flex h-10 items-center justify-center rounded-md border border-slate-200 bg-white px-4 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
-          onClick={() => signOut({ callbackUrl: "/sign-in" })}
+          className="ui-button"
+          data-variant="outlined"
+          onClick={() => signOut({ callbackUrl: appPath("/sign-in") })}
           type="button"
         >
           Đăng xuất

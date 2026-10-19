@@ -4,7 +4,8 @@ import DashboardStats from "@/src/components/owner/dashboard/dashboard-stats";
 import SourceStatusTable from "@/src/components/owner/dashboard/source-status-table";
 import { useDataSources } from "@/src/hooks/owner/use-data-sources";
 import { useViews } from "@/src/hooks/owner/use-views";
-import Link from "next/link";
+import AppLink from "@/src/components/app-link";
+import PageHeader from "@/src/components/common/page-header";
 import type { SVGProps } from "react";
 
 const DASHBOARD_PAGE = 1;
@@ -78,41 +79,35 @@ export default function OwnerDashboardPage() {
   ) as string[];
 
   return (
-    <section className="mx-auto flex w-full max-w-[1240px] flex-col gap-6">
-      <header className="flex flex-wrap items-start justify-between gap-5">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900">
-            Tổng quan
-          </h1>
-          <p className="mt-2 text-sm font-medium text-slate-500">
-            Hiệu suất và trạng thái của các dữ liệu hiện tại.
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3">
-          <span className="inline-flex h-11 items-center gap-2.5 rounded-md border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-500 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+    <section className="mx-auto flex w-full max-w-[1240px] flex-col gap-8">
+      <PageHeader
+        title="Tổng quan"
+        description="Theo dõi nguồn dữ liệu và các view trong không gian làm việc của bạn."
+        actions={
+          <>
+          <span className="ui-update-status" role="status">
             <span
-              className={`h-2.5 w-2.5 rounded-full ${
-                isRefreshing ? "animate-pulse bg-blue-700" : "bg-emerald-500"
-              }`}
+              className={`ui-status-dot ${isRefreshing ? "animate-pulse" : ""}`}
+              aria-hidden="true"
             />
             {isRefreshing ? "Đang cập nhật..." : "Đã cập nhật"}
           </span>
-          <Link
-            className="inline-flex h-11 items-center justify-center gap-2.5 rounded-md border border-blue-700 bg-blue-700 px-5 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(30,58,138,0.18)] transition-colors hover:border-blue-800 hover:bg-blue-800"
+          <AppLink
+            className="ui-button"
             href="/owner/views/new"
           >
             <PlusIcon className="h-5 w-5" />
-            Tạo View Mới
-          </Link>
-        </div>
-      </header>
+            Tạo view mới
+          </AppLink>
+          </>
+        }
+      />
 
       {allErrors.length > 0 ? (
-        <div className="space-y-2">
+        <div className="space-y-2" role="alert">
           {allErrors.map((message) => (
             <p
-              className="rounded-lg border border-brown-200 bg-brown-50 px-5 py-4 text-sm text-brown-700"
+              className="ui-alert"
               key={message}
             >
               {message}

@@ -6,7 +6,8 @@ import {
   resetPassword,
   type ForgotPasswordResponse,
 } from "@/src/services/auth.service";
-import Link from "next/link";
+import AppLink from "@/src/components/app-link";
+import { replaceAppPath } from "@/src/lib/app-path";
 import { useRouter } from "next/navigation";
 import {
   useState,
@@ -386,7 +387,7 @@ export default function ForgotPasswordForm() {
       });
 
       setResetValues(initialResetValues);
-      router.replace("/sign-in");
+      replaceAppPath(router, "/sign-in");
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : text.resetFallback);
     } finally {
@@ -608,12 +609,12 @@ export default function ForgotPasswordForm() {
 
           <p className="mt-7 text-center text-sm text-slate-600 sm:mt-8">
             {text.rememberPassword}{" "}
-            <Link
+            <AppLink
               className="font-medium text-blue-500 transition-colors hover:text-blue-600"
               href="/sign-in"
             >
               {text.backToSignIn}
-            </Link>
+            </AppLink>
           </p>
         </div>
       </div>

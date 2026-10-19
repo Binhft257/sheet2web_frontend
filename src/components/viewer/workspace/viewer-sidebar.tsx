@@ -1,6 +1,7 @@
 "use client";
 
-import Link from "next/link";
+import AppLink from "@/src/components/app-link";
+import { internalPath } from "@/src/lib/app-path";
 import { usePathname } from "next/navigation";
 import type { ReactElement, SVGProps } from "react";
 
@@ -106,7 +107,7 @@ function isActiveRoute(pathname: string, href: string) {
 }
 
 export default function ViewerSidebar() {
-  const pathname = usePathname();
+  const pathname = internalPath(usePathname());
 
   return (
     <aside className="hidden h-screen w-64 shrink-0 border-r border-slate-100 bg-white shadow-[1px_0_3px_rgba(15,23,42,0.04)] lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:flex-col">
@@ -132,7 +133,7 @@ export default function ViewerSidebar() {
             const active = isActiveRoute(pathname, href);
             return (
               <li key={href}>
-                <Link
+                <AppLink
                   className={`relative flex h-12 items-center gap-3 rounded-md px-3 text-sm font-semibold transition-colors ${
                     active
                       ? "bg-blue-50 text-blue-900"
@@ -145,7 +146,7 @@ export default function ViewerSidebar() {
                   {active ? (
                     <span className="absolute right-0 top-2.5 h-7 w-1 rounded-l-full bg-blue-700" />
                   ) : null}
-                </Link>
+                </AppLink>
               </li>
             );
           })}
@@ -153,13 +154,13 @@ export default function ViewerSidebar() {
       </nav>
 
       <div className="border-t border-slate-100 p-4">
-        <Link
+        <AppLink
           className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-4 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
           href="/"
         >
           <WorkspaceSwitchIcon className="h-5 w-5" />
           Đổi workspace
-        </Link>
+        </AppLink>
       </div>
     </aside>
   );

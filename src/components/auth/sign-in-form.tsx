@@ -38,6 +38,8 @@ const initialValues: SignInValues = {
   password: "",
 };
 const SIGN_IN_DRAFT_KEY = "sign-in-form-draft";
+const APP_PREFIX =
+  process.env.NODE_ENV === "production" ? "/sheet2web" : "";
 
 function mapErrors(error: z.ZodError<SignInValues>): SignInErrors {
   const nextErrors: SignInErrors = {};
@@ -174,10 +176,7 @@ export default function SignInForm({
           ...previous,
           email:
             typeof parsedDraft.email === "string" ? parsedDraft.email : "",
-          password:
-            typeof parsedDraft.password === "string"
-              ? parsedDraft.password
-              : "",
+          password: "",
         }));
       }, 0);
 
@@ -192,7 +191,10 @@ export default function SignInForm({
       return;
     }
 
-    window.sessionStorage.setItem(SIGN_IN_DRAFT_KEY, JSON.stringify(values));
+    window.sessionStorage.setItem(
+      SIGN_IN_DRAFT_KEY,
+      JSON.stringify({ email: values.email }),
+    );
   }, [values]);
 
   useEffect(() => {
@@ -291,8 +293,12 @@ export default function SignInForm({
       }
 
       window.sessionStorage.removeItem(SIGN_IN_DRAFT_KEY);
-      router.push("/");
-      router.refresh();
+      if (APP_PREFIX) {
+        window.location.assign(`${APP_PREFIX}/`);
+      } else {
+        router.push(`${APP_PREFIX}/`);
+        router.refresh();
+      }
     } catch {
       setSubmitError("Không thể đăng nhập lúc này. Vui lòng thử lại.");
     } finally {
@@ -372,7 +378,7 @@ export default function SignInForm({
                 </label>
                 <a
                   className="text-sm font-medium text-blue-500 transition-colors hover:text-blue-600"
-                  href="/forgot-password"
+                  href={`${APP_PREFIX}/forgot-password`}
                 >
                   Quên mật khẩu?
                 </a>
@@ -432,7 +438,7 @@ export default function SignInForm({
             Chưa có tài khoản?{" "}
             <a
               className="font-medium text-blue-500 transition-colors hover:text-blue-600"
-              href="/sign-up"
+              href={`${APP_PREFIX}/sign-up`}
             >
               Đăng ký ngay
             </a>
@@ -445,7 +451,11 @@ export default function SignInForm({
         onClose={() => setIsRetryModalOpen(false)}
         onVerified={() => {
           setIsRetryModalOpen(false);
-          router.push("/sign-in?registered=1");
+          if (APP_PREFIX) {
+            window.location.assign(`${APP_PREFIX}/sign-in?registered=1`);
+          } else {
+            router.push(`${APP_PREFIX}/sign-in?registered=1`);
+          }
         }}
         open={isRetryModalOpen}
       />

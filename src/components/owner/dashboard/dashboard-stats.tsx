@@ -12,8 +12,6 @@ type StatConfig = {
   key: "totalDataSources" | "totalViews" | "publicViews" | "privateViews";
   label: string;
   icon: (props: SVGProps<SVGSVGElement>) => ReactElement;
-  iconContainerClassName: string;
-  iconClassName: string;
 };
 
 function DatabaseIcon(props: SVGProps<SVGSVGElement>) {
@@ -94,43 +92,23 @@ const statsConfig: StatConfig[] = [
     key: "totalDataSources",
     label: "Tổng nguồn dữ liệu",
     icon: DatabaseIcon,
-    iconContainerClassName: "bg-blue-50",
-    iconClassName: "text-blue-700",
   },
   {
     key: "totalViews",
     label: "Tổng số view",
     icon: WebIcon,
-    iconContainerClassName: "bg-indigo-50",
-    iconClassName: "text-indigo-700",
   },
   {
     key: "publicViews",
     label: "View công khai",
     icon: PublicIcon,
-    iconContainerClassName: "bg-emerald-50",
-    iconClassName: "text-emerald-700",
   },
   {
     key: "privateViews",
     label: "View riêng tư",
     icon: PrivateIcon,
-    iconContainerClassName: "bg-amber-50",
-    iconClassName: "text-amber-700",
   },
 ];
-
-function SkeletonCard() {
-  return (
-    <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
-      <div className="mb-6 h-12 w-12 animate-pulse rounded-md bg-slate-200" />
-      <div className="space-y-3">
-        <div className="h-5 w-40 animate-pulse rounded bg-slate-200" />
-        <div className="h-12 w-24 animate-pulse rounded bg-slate-200" />
-      </div>
-    </div>
-  );
-}
 
 export default function DashboardStats({
   totalDataSources,
@@ -146,40 +124,22 @@ export default function DashboardStats({
     privateViews,
   };
 
-  if (isLoading) {
-    return (
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
-        {statsConfig.map((stat) => (
-          <SkeletonCard key={stat.key} />
-        ))}
-      </div>
-    );
-  }
-
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <dl className="ui-stats" aria-label="Thống kê nguồn dữ liệu và view" aria-busy={isLoading}>
       {statsConfig.map((stat) => {
         const Icon = stat.icon;
         return (
           <div
-            className="rounded-lg border border-slate-200 bg-white p-5 shadow-[0_8px_24px_rgba(15,23,42,0.04)] transition-shadow hover:shadow-[0_12px_30px_rgba(15,23,42,0.07)]"
+            className="ui-stat"
             key={stat.key}
           >
-            <div
-              className={`mb-4 inline-flex h-10 w-10 items-center justify-center rounded-md ${stat.iconContainerClassName}`}
-            >
-              <Icon className={`h-6 w-6 ${stat.iconClassName}`} />
-            </div>
-
-            <p className="mb-2 text-sm font-bold text-slate-500">
-              {stat.label}
-            </p>
-            <p className="text-2xl font-black text-slate-900">
-              {values[stat.key]}
-            </p>
+            <dt><span>{stat.label}</span><Icon /></dt>
+            <dd>
+              {isLoading ? <span className="ui-skeleton h-10 w-16" aria-label="Đang tải" /> : values[stat.key]}
+            </dd>
           </div>
         );
       })}
-    </div>
+    </dl>
   );
 }

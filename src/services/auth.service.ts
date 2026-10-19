@@ -1,3 +1,5 @@
+import { appPath } from "@/src/lib/app-path";
+
 type ApiErrorResponse = {
   message?: string | string[];
 };
@@ -64,7 +66,7 @@ async function postJson<TResponse>(
   body: Record<string, string>,
   fallbackMessage: string,
 ) {
-  const response = await fetch(endpoint, {
+  const response = await fetch(appPath(endpoint), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

@@ -1,4 +1,5 @@
 import { auth } from "@/auth";
+import { appPath } from "@/src/lib/app-path";
 
 export default auth((req) => {
   const hasAccessToken = Boolean(req.auth?.accessToken);
@@ -20,7 +21,7 @@ export default auth((req) => {
     );
 
   if (!hasAccessToken && !isPublicRoute) {
-    return Response.redirect(new URL("/sign-in", req.nextUrl.origin));
+    return Response.redirect(new URL(appPath("/sign-in"), req.nextUrl.origin));
   }
 });
 
