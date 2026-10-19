@@ -1,287 +1,82 @@
 ﻿"use client";
 
+import PageHeader from "@/src/components/common/page-header";
+import Toast from "@/src/components/common/toast";
+import { PlusIcon } from "@/src/components/common/icons";
+import { SharedButton } from "@/src/components/share";
 import DataSourcesTable from "@/src/components/owner/data-sources/data-sources-table";
+import DataSourcesToolbar from "@/src/components/owner/data-sources/data-sources-toolbar";
 import DeleteDataSourceModal from "@/src/components/owner/data-sources/delete-data-source-modal";
 import Pagination from "@/src/components/owner/data-sources/pagination";
 import UpsertDataSourceModal from "@/src/components/owner/data-sources/upsert-data-source-modal";
-import {
-  useCreateDataSource,
-  useDataSources,
-  useDeleteDataSource,
-  useUpdateDataSource,
-} from "@/src/hooks/owner/use-data-sources";
-import type {
-  CreateDataSourceBody,
-  DataSource,
-  DataSourceStatusFilter,
-  UpdateDataSourceBody,
-} from "@/src/types/data-source";
-import { useQueryClient } from "@tanstack/react-query";
-import type { ChangeEvent, SVGProps } from "react";
-import { useState } from "react";
-
-const DATA_SOURCES_LIMIT = 10;
-
-type ModalState =
-  | { mode: "create" }
-  | { mode: "edit"; dataSource: DataSource }
-  | null;
-
-function PlusIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      aria-hidden="true"
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="1.8"
-      viewBox="0 0 24 24"
-      {...props}
-    >
-      <path d="M12 5v14M5 12h14" />
-    </svg>
-  );
-}
-
-function SearchIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      aria-hidden="true"
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="1.8"
-      viewBox="0 0 24 24"
-      {...props}
-    >
-      <circle cx="11" cy="11" r="7" />
-      <path d="m20 20-3.5-3.5" />
-    </svg>
-  );
-}
-
-function CloseIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      aria-hidden="true"
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="1.8"
-      viewBox="0 0 24 24"
-      {...props}
-    >
-      <path d="m18 6-12 12M6 6l12 12" />
-    </svg>
-  );
-}
-
-function getErrorMessage(error: unknown, fallbackMessage: string) {
-  if (error instanceof Error && error.message.trim()) {
-    return error.message;
-  }
-
-  return fallbackMessage;
-}
+import useDataSourcesPage from "@/src/features/owner/data-sources/hooks/use-data-sources-page";
 
 export default function DataSourcesPage() {
-  const queryClient = useQueryClient();
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<
-    DataSourceStatusFilter | ""
-  >("");
-  const [modalState, setModalState] = useState<ModalState>(null);
-  const [deleteTarget, setDeleteTarget] = useState<DataSource | null>(null);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-
-  const dataSourcesQuery = useDataSources({
-    page,
-    limit: DATA_SOURCES_LIMIT,
-    search,
-    status: statusFilter || undefined,
-  });
-  const createDataSourceMutation = useCreateDataSource();
-  const updateDataSourceMutation = useUpdateDataSource();
-  const deleteDataSourceMutation = useDeleteDataSource();
-
-  const dataSources = dataSourcesQuery.data?.items ?? [];
-  const paginationMeta =
-    dataSourcesQuery.data?.meta ?? {
-      page,
-      limit: DATA_SOURCES_LIMIT,
-      total: 0,
-      totalPages: 1,
-    };
-  const tableErrorMessage = dataSourcesQuery.isError
-    ? getErrorMessage(
-        dataSourcesQuery.error,
-        "Không thể tải danh sách nguồn dữ liệu.",
-      )
-    : null;
-
-  const upsertPending =
-    createDataSourceMutation.isPending || updateDataSourceMutation.isPending;
-  const updatingId =
-    updateDataSourceMutation.isPending &&
-    modalState?.mode === "edit" &&
-    modalState.dataSource
-      ? modalState.dataSource.id
-      : null;
-
-  function handleSearchChange(event: ChangeEvent<HTMLInputElement>) {
-    setSearch(event.target.value);
-    setPage(1);
-  }
-
-  function handleStatusFilterChange(event: ChangeEvent<HTMLSelectElement>) {
-    setStatusFilter(event.target.value as DataSourceStatusFilter | "");
-    setPage(1);
-  }
-
-  function openCreateModal() {
-    setModalState({ mode: "create" });
-  }
-
-  function openEditModal(dataSource: DataSource) {
-    setModalState({ mode: "edit", dataSource });
-  }
-
-  async function refreshDataSources() {
-    await queryClient.invalidateQueries({ queryKey: ["data-sources"] });
-  }
-
-  async function handleUpsertDataSource(
-    values: CreateDataSourceBody | UpdateDataSourceBody,
-  ) {
-    if (modalState?.mode === "create") {
-      await createDataSourceMutation.mutateAsync(values as CreateDataSourceBody);
-      setPage(1);
-      setToastMessage("Thêm nguồn thành công");
-      setModalState(null);
-      await refreshDataSources();
-      return;
-    }
-
-    if (modalState?.mode === "edit") {
-      await updateDataSourceMutation.mutateAsync({
-        id: modalState.dataSource.id,
-        body: values as UpdateDataSourceBody,
-      });
-      setModalState(null);
-      setToastMessage("Cập nhật nguồn thành công");
-      await refreshDataSources();
-    }
-  }
-
-  async function handleDeleteDataSource() {
-    if (!deleteTarget) {
-      return;
-    }
-
-    await deleteDataSourceMutation.mutateAsync(deleteTarget.id);
-    setDeleteTarget(null);
-    setToastMessage("Xóa nguồn thành công");
-    await refreshDataSources();
-  }
+  const workspace = useDataSourcesPage();
 
   return (
-    <section className="mx-auto flex w-full max-w-[1240px] flex-col gap-6">
-      {toastMessage ? (
-        <div className="fixed right-6 top-20 z-40 flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm font-semibold text-emerald-800 shadow-[0_12px_30px_rgba(15,23,42,0.12)]">
-          <span>{toastMessage}</span>
-          <button
-            className="inline-flex h-6 w-6 items-center justify-center rounded-md text-emerald-700 transition-colors hover:bg-emerald-100"
-            onClick={() => setToastMessage(null)}
-            type="button"
-          >
-            <CloseIcon className="h-4 w-4" />
-          </button>
-        </div>
-      ) : null}
-
-      <header className="flex flex-wrap items-end justify-between gap-5">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900">Nguồn dữ liệu</h1>
-          <p className="mt-2 text-sm font-medium text-slate-500">
-            Quản lý các Google Sheet đã kết nối vào hệ thống
-          </p>
-        </div>
-
-        <button
-          className="inline-flex h-11 items-center justify-center gap-2.5 rounded-md border border-blue-700 bg-blue-700 px-5 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(30,58,138,0.18)] transition-colors hover:border-blue-800 hover:bg-blue-800"
-          onClick={openCreateModal}
-          type="button"
-        >
-          <PlusIcon className="h-5 w-5" />
-          Thêm nguồn mới
-        </button>
-      </header>
-
-      <div className="flex flex-wrap items-center gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
-        <div className="relative min-w-[280px] flex-1">
-          <SearchIcon className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-          <input
-            className="h-11 w-full rounded-md border border-slate-200 bg-white py-2.5 pl-11 pr-4 text-sm font-medium text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-blue-700 focus:ring-2 focus:ring-blue-100"
-            onChange={handleSearchChange}
-            placeholder="Tìm tên nguồn dữ liệu..."
-            type="search"
-            value={search}
-          />
-        </div>
-
-        <select
-          className="h-11 rounded-md border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 outline-none transition-colors focus:border-blue-700 focus:ring-2 focus:ring-blue-100"
-          onChange={handleStatusFilterChange}
-          value={statusFilter}
-        >
-          <option value="">Tất cả trạng thái</option>
-          <option value="active">Success</option>
-          <option value="error">Error</option>
-          <option value="disconnected">Disconnected</option>
-        </select>
-      </div>
-
-      <DataSourcesTable
-        dataSources={dataSources}
-        deletingId={
-          deleteDataSourceMutation.isPending && deleteTarget ? deleteTarget.id : null
-        }
-        errorMessage={tableErrorMessage}
-        isLoading={dataSourcesQuery.isPending}
-        onDelete={setDeleteTarget}
-        onEdit={openEditModal}
-        onRetry={() => dataSourcesQuery.refetch()}
-        updatingId={updatingId}
+    <section className="mx-auto flex w-full max-w-[1240px] flex-col gap-8">
+      <Toast
+        message={workspace.toastMessage}
+        onDismiss={workspace.dismissToast}
       />
-
-      {!tableErrorMessage ? (
-        <Pagination meta={paginationMeta} onPageChange={setPage} />
-      ) : null}
-
+      <PageHeader
+        title="Nguồn dữ liệu"
+        description="Kết nối và quản lý các bảng tính Google Sheets dùng để tạo view."
+        actions={
+          <SharedButton onClick={workspace.openCreateModal}>
+            <PlusIcon />
+            Thêm nguồn mới
+          </SharedButton>
+        }
+      />
+      <section className="ui-panel" aria-label="Danh sách nguồn dữ liệu">
+        <DataSourcesToolbar
+          search={workspace.search}
+          statusFilter={workspace.statusFilter}
+          onSearchChange={workspace.handleSearchChange}
+          onStatusFilterChange={workspace.handleStatusFilterChange}
+        />
+        <DataSourcesTable
+          dataSources={workspace.dataSources}
+          deletingId={workspace.deletingId}
+          errorMessage={workspace.tableErrorMessage}
+          isLoading={workspace.isLoading}
+          onDelete={workspace.openDeleteModal}
+          onEdit={workspace.openEditModal}
+          onRetry={workspace.retry}
+          updatingId={workspace.updatingId}
+        />
+        {!workspace.tableErrorMessage ? (
+          <Pagination
+            meta={workspace.paginationMeta}
+            onPageChange={workspace.changePage}
+          />
+        ) : null}
+      </section>
       <UpsertDataSourceModal
-        dataSource={modalState?.mode === "edit" ? modalState.dataSource : null}
-        isSubmitting={upsertPending}
+        dataSource={
+          workspace.modalState?.mode === "edit"
+            ? workspace.modalState.dataSource
+            : null
+        }
+        isSubmitting={workspace.upsertPending}
         key={
-          modalState?.mode === "edit"
-            ? `edit-${modalState.dataSource.id}`
+          workspace.modalState?.mode === "edit"
+            ? `edit-${workspace.modalState.dataSource.id}`
             : "create-data-source"
         }
-        mode={modalState?.mode ?? "create"}
-        onClose={() => setModalState(null)}
-        onSubmit={handleUpsertDataSource}
-        open={Boolean(modalState)}
+        mode={workspace.modalState?.mode ?? "create"}
+        onClose={workspace.closeUpsertModal}
+        onSubmit={workspace.handleUpsertDataSource}
+        open={Boolean(workspace.modalState)}
       />
-
       <DeleteDataSourceModal
-        dataSource={deleteTarget}
-        isSubmitting={deleteDataSourceMutation.isPending}
-        onClose={() => setDeleteTarget(null)}
-        onConfirm={handleDeleteDataSource}
-        open={Boolean(deleteTarget)}
+        dataSource={workspace.deleteTarget}
+        isSubmitting={Boolean(workspace.deletingId)}
+        onClose={workspace.closeDeleteModal}
+        onConfirm={workspace.handleDeleteDataSource}
+        open={Boolean(workspace.deleteTarget)}
       />
     </section>
   );

@@ -1,6 +1,8 @@
-﻿import StatusBadge from "@/src/components/owner/data-sources/status-badge";
+﻿import EmptyState from "@/src/components/common/empty-state";
+import { SheetIcon } from "@/src/components/common/icons";
+import { SharedButton } from "@/src/components/share";
+import StatusBadge from "@/src/components/owner/data-sources/status-badge";
 import type { DataSource } from "@/src/types/data-source";
-import type { SVGProps } from "react";
 
 type DataSourcesTableProps = {
   dataSources: DataSource[];
@@ -13,40 +15,16 @@ type DataSourcesTableProps = {
   deletingId?: string | null;
 };
 
-function SheetIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      aria-hidden="true"
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="1.8"
-      viewBox="0 0 24 24"
-      {...props}
-    >
-      <rect height="16" rx="2" width="14" x="5" y="4" />
-      <path d="M9 9h6M9 13h6M9 17h3" />
-    </svg>
-  );
-}
-
 function getSourceTypeLabel(sourceType: string) {
   const normalized = sourceType.trim().toLowerCase();
-
-  if (normalized === "google_sheet") {
-    return "Google Sheet";
-  }
-
-  return sourceType || "Google Sheet";
+  return normalized === "google_sheet"
+    ? "Google Sheet"
+    : sourceType || "Google Sheet";
 }
 
 function formatDateTime(dateTime: string) {
   const parsed = new Date(dateTime);
-  if (Number.isNaN(parsed.getTime())) {
-    return "--";
-  }
-
+  if (Number.isNaN(parsed.getTime())) return "--";
   return new Intl.DateTimeFormat("vi-VN", {
     day: "2-digit",
     hour: "2-digit",
@@ -57,38 +35,17 @@ function formatDateTime(dateTime: string) {
 }
 
 function LoadingRows() {
-  return (
-    <>
-      {Array.from({ length: 5 }).map((_, index) => (
-        <tr className="border-b border-slate-100" key={`source-loading-${index}`}>
-          <td className="px-6 py-5">
-            <div className="flex items-center gap-3">
-              <div className="h-12 w-12 animate-pulse rounded-md bg-slate-200" />
-              <div className="h-6 w-56 animate-pulse rounded bg-slate-200" />
-            </div>
-          </td>
-          <td className="px-6 py-5">
-            <div className="h-6 w-32 animate-pulse rounded bg-slate-200" />
-          </td>
-          <td className="px-6 py-5">
-            <div className="h-6 w-20 animate-pulse rounded bg-slate-200" />
-          </td>
-          <td className="px-6 py-5">
-            <div className="h-8 w-28 animate-pulse rounded-full bg-slate-200" />
-          </td>
-          <td className="px-6 py-5">
-            <div className="h-6 w-36 animate-pulse rounded bg-slate-200" />
-          </td>
-          <td className="px-6 py-5">
-            <div className="h-6 w-44 animate-pulse rounded bg-slate-200" />
-          </td>
-          <td className="px-6 py-5">
-            <div className="h-9 w-36 animate-pulse rounded bg-slate-200" />
-          </td>
-        </tr>
+  return Array.from({ length: 5 }, (_, rowIndex) => (
+    <tr key={`source-loading-${rowIndex}`} aria-hidden="true">
+      {Array.from({ length: 7 }, (_, cellIndex) => (
+        <td key={cellIndex}>
+          <span
+            className={`ui-skeleton ${cellIndex === 0 ? "h-11 w-44" : "h-6 w-full"}`}
+          />
+        </td>
       ))}
-    </>
-  );
+    </tr>
+  ));
 }
 
 export default function DataSourcesTable({
@@ -101,103 +58,112 @@ export default function DataSourcesTable({
   updatingId = null,
   deletingId = null,
 }: DataSourcesTableProps) {
+  if (!isLoading && errorMessage) {
+    return (
+      <EmptyState
+        title="Không thể tải danh sách nguồn dữ liệu"
+        description={errorMessage}
+        icon={<SheetIcon />}
+        action={<SharedButton onClick={onRetry}>Thử lại</SharedButton>}
+      />
+    );
+  }
+  if (!isLoading && dataSources.length === 0) {
+    return (
+      <EmptyState
+        title="Chưa có nguồn dữ liệu nào"
+        description="Bấm Thêm nguồn mới để kết nối Google Sheet đầu tiên."
+        icon={<SheetIcon />}
+      />
+    );
+  }
+
   return (
-    <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[1080px] text-left">
-          <thead className="bg-[#f5f5fa]">
-            <tr className="border-b border-slate-100">
-              <th className="px-6 py-5 text-sm font-bold text-slate-500">Tên nguồn</th>
-              <th className="px-6 py-5 text-sm font-bold text-slate-500">Loại nguồn</th>
-              <th className="px-6 py-5 text-sm font-bold text-slate-500">Số sheet</th>
-              <th className="px-6 py-5 text-sm font-bold text-slate-500">Trạng thái</th>
-              <th className="px-6 py-5 text-sm font-bold text-slate-500">Thời gian đăng</th>
-              <th className="px-6 py-5 text-sm font-bold text-slate-500">Lỗi nếu có</th>
-              <th className="px-6 py-5 text-sm font-bold text-slate-500">Hành động</th>
+    <div aria-busy={isLoading}>
+      {isLoading ? (
+        <span className="sr-only" role="status">
+          Đang tải nguồn dữ liệu
+        </span>
+      ) : null}
+      <div
+        className="ui-table-region"
+        role="region"
+        tabIndex={0}
+        aria-label="Bảng nguồn dữ liệu, có thể cuộn ngang"
+      >
+        <table className="ui-table ui-sources-table">
+          <caption className="sr-only">
+            Nguồn dữ liệu đã kết nối và các thao tác quản lý
+          </caption>
+          <colgroup>
+            <col className="w-60" />
+            <col className="w-32" />
+            <col className="w-24" />
+            <col className="w-36" />
+            <col className="w-44" />
+            <col className="w-64" />
+            <col className="w-40" />
+          </colgroup>
+          <thead>
+            <tr>
+              <th scope="col">Tên nguồn</th>
+              <th scope="col">Loại nguồn</th>
+              <th scope="col">Số sheet</th>
+              <th scope="col">Trạng thái</th>
+              <th scope="col">Thời gian đăng</th>
+              <th scope="col">Lỗi nếu có</th>
+              <th scope="col">Hành động</th>
             </tr>
           </thead>
-
-          <tbody className="text-sm text-slate-700">
+          <tbody>
             {isLoading ? (
               <LoadingRows />
-            ) : errorMessage ? (
-              <tr>
-                <td className="px-6 py-14 text-center" colSpan={7}>
-                  <div className="mx-auto max-w-md">
-                    <p className="text-base font-bold text-slate-900">
-                      Không thể tải danh sách nguồn dữ liệu
-                    </p>
-                    <p className="mt-2 text-sm font-medium text-slate-500">{errorMessage}</p>
-                    <button
-                      className="mt-4 inline-flex h-11 items-center justify-center rounded-md border border-blue-700 bg-blue-700 px-5 text-sm font-bold text-white transition-colors hover:border-blue-800 hover:bg-blue-800"
-                      onClick={onRetry}
-                      type="button"
-                    >
-                      Thử lại
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ) : dataSources.length === 0 ? (
-              <tr>
-                <td className="px-6 py-16 text-center" colSpan={7}>
-                  <div className="mx-auto max-w-md">
-                    <p className="text-base font-bold text-slate-900">Chưa có nguồn dữ liệu nào</p>
-                    <p className="mt-2 text-sm font-medium text-slate-500">
-                      Bấm Thêm nguồn mới để kết nối Google Sheet đầu tiên
-                    </p>
-                  </div>
-                </td>
-              </tr>
             ) : (
               dataSources.map((item) => (
-                <tr
-                  className="border-b border-slate-100 transition-colors hover:bg-slate-50"
-                  key={item.id}
-                >
-                  <td className="px-6 py-5">
-                    <div className="flex min-w-[260px] items-center gap-3">
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100">
-                        <SheetIcon className="h-5 w-5" />
+                <tr key={item.id}>
+                  <td>
+                    <div className="flex items-center gap-3">
+                      <span className="ui-source-icon">
+                        <SheetIcon />
                       </span>
-                      <p className="truncate font-semibold text-slate-900">{item.title}</p>
+                      <p className="min-w-0 font-medium break-words text-ink">
+                        {item.title}
+                      </p>
                     </div>
                   </td>
-                  <td className="px-6 py-5 font-medium text-slate-700">
-                    {getSourceTypeLabel(item.sourceType)}
+                  <td>{getSourceTypeLabel(item.sourceType)}</td>
+                  <td className="whitespace-nowrap tabular-nums">
+                    {item.sheetCount} sheet
                   </td>
-                  <td className="px-6 py-5 font-medium text-slate-700">{item.sheetCount} sheet</td>
-                  <td className="px-6 py-5">
+                  <td>
                     <StatusBadge status={item.sourceStatus} />
                   </td>
-                  <td className="px-6 py-5 font-medium text-slate-500">
-                    {formatDateTime(item.createdAt)}
-                  </td>
-                  <td className="max-w-[320px] px-6 py-5">
+                  <td>{formatDateTime(item.createdAt)}</td>
+                  <td>
                     {item.lastError ? (
-                      <p className="line-clamp-2 text-sm font-semibold text-red-700">{item.lastError}</p>
+                      <p className="ui-source-error">{item.lastError}</p>
                     ) : (
-                      <span className="font-medium text-slate-400">-</span>
+                      <span aria-label="Không có lỗi">—</span>
                     )}
                   </td>
-                  <td className="px-6 py-5">
+                  <td>
                     <div className="flex items-center gap-2">
-                      <button
-                        className="inline-flex h-9 items-center justify-center rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                      <SharedButton
+                        variant="outlined"
+                        size="sm"
                         disabled={Boolean(deletingId) || updatingId === item.id}
                         onClick={() => onEdit(item)}
-                        type="button"
                       >
                         {updatingId === item.id ? "Đang sửa..." : "Sửa"}
-                      </button>
-                      <button
-                        className="inline-flex h-9 items-center justify-center rounded-md border border-red-200 bg-red-50 px-3 text-sm font-semibold text-red-700 transition-colors hover:border-red-300 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+                      </SharedButton>
+                      <SharedButton
+                        variant="danger"
+                        size="sm"
                         disabled={Boolean(updatingId) || deletingId === item.id}
                         onClick={() => onDelete(item)}
-                        type="button"
                       >
                         {deletingId === item.id ? "Đang xóa..." : "Xóa"}
-                      </button>
+                      </SharedButton>
                     </div>
                   </td>
                 </tr>
@@ -206,6 +172,9 @@ export default function DataSourcesTable({
           </tbody>
         </table>
       </div>
-    </section>
+      <p className="border-t border-line px-5 py-3 text-xs text-muted">
+        Cuộn ngang để xem đầy đủ thông tin và thao tác.
+      </p>
+    </div>
   );
 }

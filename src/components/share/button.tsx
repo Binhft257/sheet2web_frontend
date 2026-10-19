@@ -1,6 +1,6 @@
 import type { ButtonHTMLAttributes } from 'react';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'inverted' | 'outlined';
+export type ButtonVariant = 'primary' | 'secondary' | 'inverted' | 'outlined' | 'danger';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
 export type SharedButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
