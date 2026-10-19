@@ -83,3 +83,22 @@ export function WarningIcon(props: IconProps) {
     </IconFrame>
   );
 }
+
+export function CopyIcon(props: IconProps) {
+  return (
+    <IconFrame {...props}>
+      <rect height="12" rx="2" width="12" x="8" y="8" />
+      <path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" />
+    </IconFrame>
+  );
+}
+
+export function ExternalIcon(props: IconProps) {
+  return (
+    <IconFrame {...props}>
+      <path d="M14 5h5v5" />
+      <path d="m10 14 9-9" />
+      <path d="M19 14v3a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h3" />
+    </IconFrame>
+  );
+}

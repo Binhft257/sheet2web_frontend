@@ -3,6 +3,7 @@ import type { ThemePreset } from "@/src/types/view";
 export type ReloadMode = "manual" | "auto";
 
 type SharedViewRenderProps = {
+  headingLevel?: "h1" | "h2";
   title: string;
   rowCount: number;
   updatedAtLabel: string;
@@ -70,6 +71,7 @@ const themeClasses: Record<ThemePreset, ViewerThemeClasses> = {
 };
 
 export default function SharedViewRender({
+  headingLevel: Heading = "h1",
   title,
   rowCount,
   updatedAtLabel,
@@ -103,7 +105,7 @@ export default function SharedViewRender({
       <header className="rounded-lg border border-slate-200 bg-white p-6 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
-            <h1 className="break-words text-3xl font-bold text-slate-900">{title}</h1>
+            <Heading className="break-words text-3xl font-bold text-slate-900">{title}</Heading>
             <div className="mt-3 flex flex-wrap items-center gap-3 text-sm font-semibold text-slate-500">
               <span>{rowCount} dòng</span>
               <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
@@ -142,7 +144,7 @@ export default function SharedViewRender({
         </div>
 
         <div className="mt-4 flex flex-wrap items-center gap-3">
-          <div className="inline-flex rounded-md border border-slate-200 bg-slate-50 p-1">
+          <div className="inline-flex rounded-md border border-slate-200 bg-slate-50 p-1" data-preview-control="reload-mode">
             <button
               className={`h-9 rounded px-3 text-sm font-bold transition-colors ${
                 reloadMode === "manual"
@@ -150,6 +152,7 @@ export default function SharedViewRender({
                   : "text-slate-500 hover:text-slate-900"
               }`}
               onClick={() => onReloadModeChange("manual")}
+              aria-pressed={reloadMode === "manual"}
               type="button"
             >
               Thủ công
@@ -161,6 +164,7 @@ export default function SharedViewRender({
                   : "text-slate-500 hover:text-slate-900"
               }`}
               onClick={() => onReloadModeChange("auto")}
+              aria-pressed={reloadMode === "auto"}
               type="button"
             >
               Tự động
@@ -187,6 +191,7 @@ export default function SharedViewRender({
               className="inline-flex h-10 items-center justify-center rounded-md border border-blue-700 bg-blue-700 px-4 text-sm font-bold text-white transition-colors hover:border-blue-800 hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
               disabled={isReloading}
               onClick={onReload}
+              data-action="reload"
               type="button"
             >
               {isReloading ? "Đang tải..." : "Reload"}

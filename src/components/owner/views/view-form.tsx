@@ -1,19 +1,16 @@
+﻿import { useEffect, useRef } from "react";
+import { SharedButton } from "@/src/components/share";
 import ThemeEditor from "@/src/components/owner/views/theme-editor";
 import type { DataSourceSheet } from "@/src/types/data-source";
-import type { ThemePreset, ViewSelectionType } from "@/src/types/view";
-
-export type ViewDraftFormValues = {
-  name: string;
-  sourceSheetId: string;
-  selectionType: ViewSelectionType;
-  rangeA1Notation: string;
-  useFirstRowAsHeader: boolean;
-  themePreset: ThemePreset;
-};
-
-export type ViewDraftFormErrors = Partial<
-  Record<keyof ViewDraftFormValues, string>
->;
+import type { ViewSelectionType } from "@/src/types/view";
+import type {
+  ViewDraftFormValues,
+  ViewDraftFormErrors,
+} from "@/src/features/owner/views/wizard-types";
+export type {
+  ViewDraftFormValues,
+  ViewDraftFormErrors,
+} from "@/src/features/owner/views/wizard-types";
 
 type ViewFormProps = {
   values: ViewDraftFormValues;
@@ -26,7 +23,6 @@ type ViewFormProps = {
   onRetrySheets: () => void;
   isPreviewing?: boolean;
 };
-
 function getSheetName(sheet: DataSourceSheet, index: number) {
   return sheet.sheetName || sheet.title || `Sheet ${index + 1}`;
 }
@@ -42,57 +38,58 @@ export default function ViewForm({
   onRetrySheets,
   isPreviewing = false,
 }: ViewFormProps) {
+  const formRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    formRef.current
+      ?.querySelector<HTMLElement>('[aria-invalid="true"]')
+      ?.focus();
+  }, [errors]);
   function updateField<TField extends keyof ViewDraftFormValues>(
     field: TField,
     value: ViewDraftFormValues[TField],
   ) {
-    onChange({
-      ...values,
-      [field]: value,
-    });
+    onChange({ ...values, [field]: value });
   }
-
   return (
-    <div className="space-y-5">
-      <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
-        <div className="border-b border-slate-100 bg-slate-50 px-5 py-4">
-          <div className="flex items-center gap-3">
-            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-700 text-sm font-bold text-white">
-              1
-            </span>
-            <h2 className="text-base font-bold text-slate-900">Cấu hình dữ liệu</h2>
+    <div className="min-w-0 space-y-6" ref={formRef}>
+      <section className="ui-panel">
+        <div className="ui-panel-header">
+          <div>
+            <h2>Cấu hình dữ liệu</h2>
+            <p>Đặt tên và chọn phần dữ liệu sẽ hiển thị.</p>
           </div>
         </div>
-
-        <div className="space-y-4 px-5 py-5">
-          <label className="block" htmlFor="view-name">
-            <span className="text-sm font-bold text-slate-700">Tên View</span>
+        <div className="ui-wizard-panel-body space-y-5">
+          <div>
+            <label className="ui-field-label" htmlFor="view-name">
+              Tên view
+            </label>
             <input
               aria-invalid={Boolean(errors.name)}
-              className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-blue-700 focus:ring-2 focus:ring-blue-100"
+              aria-describedby={errors.name ? "view-name-error" : undefined}
+              className="ui-form-control"
               id="view-name"
               onChange={(event) => updateField("name", event.target.value)}
-              placeholder="Ví dụ: Bảng điểm lớp A"
+              placeholder="Ví dụ: Danh mục sản phẩm"
               type="text"
               value={values.name}
             />
             {errors.name ? (
-              <p className="mt-1.5 text-sm font-semibold text-red-600">
+              <p className="ui-field-error" id="view-name-error" role="alert">
                 {errors.name}
               </p>
             ) : null}
-          </label>
-
+          </div>
           <div>
-            <label
-              className="text-sm font-bold text-slate-700"
-              htmlFor="source-sheet"
-            >
+            <label className="ui-field-label" htmlFor="source-sheet">
               Chọn sheet/tab
             </label>
             <select
               aria-invalid={Boolean(errors.sourceSheetId)}
-              className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800 outline-none transition-colors focus:border-blue-700 focus:ring-2 focus:ring-blue-100"
+              aria-describedby={
+                errors.sourceSheetId ? "source-sheet-error" : undefined
+              }
+              className="ui-form-control"
               disabled={isLoadingSheets || Boolean(sheetsErrorMessage)}
               id="source-sheet"
               onChange={(event) =>
@@ -110,31 +107,31 @@ export default function ViewForm({
               ))}
             </select>
             {errors.sourceSheetId ? (
-              <p className="mt-1.5 text-sm font-semibold text-red-600">
+              <p
+                className="ui-field-error"
+                id="source-sheet-error"
+                role="alert"
+              >
                 {errors.sourceSheetId}
               </p>
             ) : null}
             {sheetsErrorMessage ? (
-              <div className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-3">
-                <p className="text-sm font-semibold text-red-700">
-                  {sheetsErrorMessage}
-                </p>
-                <button
-                  className="mt-2 text-sm font-bold text-red-700 underline"
+              <div className="ui-alert mt-3" role="alert">
+                <p>{sheetsErrorMessage}</p>
+                <SharedButton
+                  className="mt-3"
+                  variant="outlined"
+                  size="sm"
                   onClick={onRetrySheets}
-                  type="button"
                 >
                   Thử lại
-                </button>
+                </SharedButton>
               </div>
             ) : null}
           </div>
-
           <fieldset>
-            <legend className="text-sm font-bold text-slate-700">
-              Phạm vi dữ liệu
-            </legend>
-            <div className="mt-2 grid gap-3 sm:grid-cols-2">
+            <legend className="ui-field-label">Phạm vi dữ liệu</legend>
+            <div className="ui-wizard-range-options">
               {[
                 {
                   value: "full_sheet",
@@ -143,53 +140,48 @@ export default function ViewForm({
                 },
                 {
                   value: "range",
-                  label: "Vùng dữ liệu/range",
+                  label: "Vùng dữ liệu",
                   hint: "Chọn range A1",
                 },
-              ].map((option) => {
-                const selected = values.selectionType === option.value;
-
-                return (
-                  <label
-                    className={`flex min-h-[76px] cursor-pointer items-start gap-3 rounded-md border px-3 py-3 transition-colors ${
-                      selected
-                        ? "border-blue-700 bg-blue-50 text-blue-900 ring-2 ring-blue-100"
-                        : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-                    }`}
-                    key={option.value}
-                  >
-                    <input
-                      checked={selected}
-                      className="mt-1 h-4 w-4 border-slate-300 text-blue-700 focus:ring-blue-700"
-                      name="selectionType"
-                      onChange={() =>
-                        updateField(
-                          "selectionType",
-                          option.value as ViewSelectionType,
-                        )
-                      }
-                      type="radio"
-                    />
-                    <span>
-                      <span className="block text-sm font-bold leading-5">
-                        {option.label}
-                      </span>
-                      <span className="mt-1 block text-xs font-semibold text-slate-500">
-                        {option.hint}
-                      </span>
+              ].map((option) => (
+                <label
+                  className="ui-wizard-choice"
+                  data-selected={values.selectionType === option.value}
+                  key={option.value}
+                >
+                  <input
+                    checked={values.selectionType === option.value}
+                    name="selectionType"
+                    onChange={() =>
+                      updateField(
+                        "selectionType",
+                        option.value as ViewSelectionType,
+                      )
+                    }
+                    type="radio"
+                    value={option.value}
+                  />
+                  <span className="min-w-0">
+                    <span className="block font-medium">{option.label}</span>
+                    <span className="mt-1 block text-xs text-muted">
+                      {option.hint}
                     </span>
-                  </label>
-                );
-              })}
+                  </span>
+                </label>
+              ))}
             </div>
           </fieldset>
-
           {values.selectionType === "range" ? (
-            <label className="block" htmlFor="range-a1">
-              <span className="text-sm font-bold text-slate-700">Range A1</span>
+            <div>
+              <label className="ui-field-label" htmlFor="range-a1">
+                Range A1
+              </label>
               <input
                 aria-invalid={Boolean(errors.rangeA1Notation)}
-                className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-blue-700 focus:ring-2 focus:ring-blue-100"
+                aria-describedby={
+                  errors.rangeA1Notation ? "range-a1-error" : undefined
+                }
+                className="ui-form-control"
                 id="range-a1"
                 onChange={(event) =>
                   updateField("rangeA1Notation", event.target.value)
@@ -199,43 +191,40 @@ export default function ViewForm({
                 value={values.rangeA1Notation}
               />
               {errors.rangeA1Notation ? (
-                <p className="mt-1.5 text-sm font-semibold text-red-600">
+                <p className="ui-field-error" id="range-a1-error" role="alert">
                   {errors.rangeA1Notation}
                 </p>
               ) : null}
-            </label>
+            </div>
           ) : null}
-
-          <label className="flex items-center gap-3 rounded-md border border-slate-200 bg-slate-50 px-3 py-3">
+          <label className="ui-wizard-checkbox">
             <input
               checked={values.useFirstRowAsHeader}
-              className="h-4 w-4 rounded border-slate-300 text-blue-700 focus:ring-blue-700"
+              id="view-first-row-header"
               onChange={(event) =>
                 updateField("useFirstRowAsHeader", event.target.checked)
               }
               type="checkbox"
             />
-            <span className="text-sm font-semibold text-slate-700">
-              Dùng dòng đầu làm header
-            </span>
+            <span>Dùng dòng đầu làm header</span>
           </label>
-
-          <button
-            className="inline-flex h-11 w-full items-center justify-center rounded-md border border-blue-700 bg-white px-4 text-sm font-bold text-blue-700 transition-colors hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-60"
+          <SharedButton
+            className="w-full"
+            variant="outlined"
             disabled={isPreviewing || isLoadingSheets}
             onClick={onPreview}
-            type="button"
           >
             {isPreviewing ? "Đang tải dữ liệu..." : "Preview"}
-          </button>
+          </SharedButton>
         </div>
       </section>
-
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
-        <ThemeEditor
-          onChange={(themePreset) => updateField("themePreset", themePreset)}
-          value={values.themePreset}
-        />
+      <section className="ui-panel">
+        <div className="ui-wizard-panel-body">
+          <ThemeEditor
+            onChange={(themePreset) => updateField("themePreset", themePreset)}
+            value={values.themePreset}
+          />
+        </div>
       </section>
     </div>
   );

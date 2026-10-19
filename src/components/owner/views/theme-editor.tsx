@@ -41,52 +41,44 @@ const presets: Array<{
 
 export default function ThemeEditor({ value, onChange }: ThemeEditorProps) {
   return (
-    <div className="space-y-3">
-      <div>
-        <h3 className="text-sm font-bold text-slate-900">Theme hiển thị</h3>
-        <p className="mt-1 text-sm font-medium text-slate-500">
-          Chọn kiểu hiển thị phù hợp với bảng dữ liệu.
-        </p>
-      </div>
-
-      <div className="grid grid-cols-3 gap-3">
-        {presets.map((preset) => {
-          const selected = preset.value === value;
-
-          return (
-            <button
-              className={`flex min-h-[168px] flex-col rounded-md border px-3 py-3 text-left transition-colors ${
-                selected
-                  ? "border-blue-700 bg-blue-50 text-blue-900 ring-2 ring-blue-100"
-                  : "border-slate-200 bg-white text-slate-700 hover:border-blue-200 hover:bg-blue-50/50"
-              }`}
-              key={preset.value}
-              onClick={() => onChange(preset.value)}
-              type="button"
+    <fieldset>
+      <legend className="ui-field-label">Theme hiển thị</legend>
+      <p className="mb-4 text-xs leading-6 text-muted">
+        Chọn kiểu hiển thị phù hợp với bảng dữ liệu.
+      </p>
+      <div className="ui-theme-options">
+        {presets.map((preset) => (
+          <label
+            className="ui-theme-option"
+            data-selected={value === preset.value}
+            key={preset.value}
+          >
+            <span
+              className={`ui-theme-swatch ${preset.previewClassName}`}
+              aria-hidden="true"
             >
-              <span
-                className={`flex h-12 w-full flex-col justify-center rounded border p-2 ${preset.previewClassName}`}
-              >
-                <span
-                  className={`mb-1 block h-2.5 rounded-sm ${preset.headerClassName}`}
-                />
-                <span
-                  className={`mb-1 block h-2 rounded-sm ${preset.rowClassName}`}
-                />
-                <span
-                  className={`block h-2 rounded-sm ${preset.rowClassName}`}
-                />
-              </span>
-              <span className="mt-3 block text-sm font-bold leading-5">
+              <span className={preset.headerClassName} />
+              <span className={preset.rowClassName} />
+              <span className={preset.rowClassName} />
+            </span>
+            <span className="min-w-0">
+              <span className="block text-sm font-medium text-ink">
                 {preset.label}
               </span>
-              <span className="mt-1 block flex-1 text-xs font-medium leading-5 text-slate-500">
+              <span className="mt-1 block text-xs leading-5 text-muted">
                 {preset.description}
               </span>
-            </button>
-          );
-        })}
+            </span>
+            <input
+              checked={value === preset.value}
+              name="themePreset"
+              onChange={() => onChange(preset.value)}
+              type="radio"
+              value={preset.value}
+            />
+          </label>
+        ))}
       </div>
-    </div>
+    </fieldset>
   );
 }

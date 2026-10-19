@@ -58,20 +58,15 @@ export default function ViewSummary({
   ];
 
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
-      <h2 className="text-base font-bold text-slate-900">Tóm tắt View</h2>
-      <dl className="mt-5 grid gap-4 sm:grid-cols-2">
+    <section className="ui-panel ui-wizard-summary">
+      <div className="ui-panel-header">
+        <h2>Tóm tắt view</h2>
+      </div>
+      <dl>
         {items.map((item) => (
-          <div
-            className="rounded-md border border-slate-100 bg-slate-50 px-4 py-3"
-            key={item.label}
-          >
-            <dt className="text-sm font-bold uppercase tracking-wide text-slate-400">
-              {item.label}
-            </dt>
-            <dd className="mt-1 break-words text-sm font-semibold text-slate-900">
-              {item.value}
-            </dd>
+          <div key={item.label}>
+            <dt>{item.label}</dt>
+            <dd>{item.value}</dd>
           </div>
         ))}
       </dl>
