@@ -8,7 +8,7 @@ type ModalProps = {
   title: string;
   description?: string;
   busy?: boolean;
-  size?: "sm" | "md";
+  size?: "sm" | "md" | "lg";
   onClose: () => void;
   children: ReactNode;
 };

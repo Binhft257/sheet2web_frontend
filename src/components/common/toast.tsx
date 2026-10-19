@@ -1,20 +1,38 @@
 "use client";
 
-import { CheckIcon, CloseIcon } from "@/src/components/common/icons";
+import {
+  CheckIcon,
+  CloseIcon,
+  WarningIcon,
+} from "@/src/components/common/icons";
 
-type ToastProps = { message: string | null; onDismiss: () => void };
+type ToastProps = {
+  message: string | null;
+  onDismiss: () => void;
+  tone?: "success" | "error";
+  placement?: "floating" | "inline";
+};
 
-export default function Toast({ message, onDismiss }: ToastProps) {
+export default function Toast({
+  message,
+  onDismiss,
+  tone = "success",
+  placement = "floating",
+}: ToastProps) {
   return (
     <div
-      className="ui-toast-region"
-      role="status"
-      aria-live="polite"
+      className={placement === "inline" ? "ui-toast-inline" : "ui-toast-region"}
+      role={tone === "error" ? "alert" : "status"}
+      aria-live={tone === "error" ? "assertive" : "polite"}
       aria-atomic="true"
     >
       {message ? (
-        <div className="ui-toast">
-          <CheckIcon className="h-5 w-5 shrink-0" />
+        <div className="ui-toast" data-tone={tone}>
+          {tone === "error" ? (
+            <WarningIcon className="h-5 w-5 shrink-0" />
+          ) : (
+            <CheckIcon className="h-5 w-5 shrink-0" />
+          )}
           <span>{message}</span>
           <button
             className="ui-icon-button"
