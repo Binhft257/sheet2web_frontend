@@ -102,3 +102,32 @@ export function ExternalIcon(props: IconProps) {
     </IconFrame>
   );
 }
+
+export function DashboardIcon(props: IconProps) {
+  return (
+    <IconFrame {...props}>
+      <rect height="8" rx="1.5" width="8" x="3" y="3" />
+      <rect height="8" rx="1.5" width="8" x="13" y="3" />
+      <rect height="8" rx="1.5" width="8" x="3" y="13" />
+      <rect height="8" rx="1.5" width="8" x="13" y="13" />
+    </IconFrame>
+  );
+}
+
+export function TableIcon(props: IconProps) {
+  return (
+    <IconFrame {...props}>
+      <rect height="16" rx="2" width="18" x="3" y="4" />
+      <path d="M3 10h18M8 10v10M16 10v10" />
+    </IconFrame>
+  );
+}
+
+export function WorkspaceSwitchIcon(props: IconProps) {
+  return (
+    <IconFrame {...props}>
+      <path d="M7 7h11m-3-3 3 3-3 3" />
+      <path d="M17 17H6m3-3-3 3 3 3" />
+    </IconFrame>
+  );
+}

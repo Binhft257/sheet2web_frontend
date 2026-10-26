@@ -1,0 +1,209 @@
+.dashboard {
+  display: flex;
+  width: 100%;
+  max-width: 1240px;
+  margin-inline: auto;
+  flex-direction: column;
+  gap: var(--ds-space-8);
+}
+.library,
+.loadingSummary,
+.loadingList {
+  border: 1px solid var(--ds-line);
+  border-radius: var(--ds-radius-panel);
+  background: var(--ds-surface);
+}
+.summary {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-4);
+  padding: var(--ds-space-6) var(--ds-space-8);
+  border-bottom: 1px solid var(--ds-line);
+}
+.summaryIcon,
+.viewIcon {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--ds-radius-control);
+}
+.summaryIcon {
+  width: 52px;
+  height: 52px;
+  background: var(--ds-primary-soft);
+  color: var(--ds-primary);
+}
+.summaryIcon svg {
+  width: 26px;
+  height: 26px;
+}
+.summary dt {
+  color: var(--ds-muted);
+  font-size: 14px;
+}
+.summary dd {
+  color: var(--ds-ink);
+  font-size: 32px;
+  font-weight: 600;
+  line-height: 1.25;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.summary p {
+  max-width: 240px;
+  margin-left: auto;
+  color: var(--ds-muted);
+  font-size: 14px;
+}
+.listHeading {
+  padding: var(--ds-space-6) var(--ds-space-8);
+}
+.listHeading h2 {
+  color: var(--ds-ink);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.listHeading p {
+  margin-top: 6px;
+  color: var(--ds-muted);
+  font-size: 14px;
+}
+.viewList {
+  padding-inline: var(--ds-space-8);
+}
+.viewRow {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--ds-space-4);
+  padding-block: var(--ds-space-6);
+  border-top: 1px solid var(--ds-line);
+}
+.viewIcon {
+  width: 40px;
+  height: 40px;
+  background: var(--ds-canvas);
+  color: var(--ds-muted);
+}
+.viewIcon svg {
+  width: 20px;
+  height: 20px;
+}
+.viewContent {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--ds-space-4) var(--ds-space-6);
+}
+.viewIdentity {
+  min-width: 0;
+}
+.viewIdentity h3 {
+  color: var(--ds-ink);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.viewDetails {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ds-space-3);
+  margin-top: var(--ds-space-2);
+  color: var(--ds-muted);
+  font-size: 13px;
+}
+.viewMetadata {
+  display: grid;
+  min-width: 0;
+  grid-column: 1;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--ds-space-4);
+}
+.viewMetadata dt {
+  margin-bottom: 4px;
+  color: var(--ds-muted);
+  font-size: 12px;
+}
+.viewMetadata dd {
+  color: var(--ds-ink);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.openButton {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+.loadingSummary {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-4);
+  padding: var(--ds-space-6);
+  margin-bottom: var(--ds-space-6);
+}
+.loadingList {
+  padding-inline: var(--ds-space-6);
+}
+.loadingRow {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-4);
+  padding-block: var(--ds-space-6);
+}
+.loadingRow + .loadingRow {
+  border-top: 1px solid var(--ds-line);
+}
+@media (min-width: 1280px) {
+  .viewContent {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) auto;
+  }
+  .viewMetadata {
+    grid-column: auto;
+    gap: var(--ds-space-6);
+  }
+  .openButton {
+    grid-column: auto;
+    grid-row: auto;
+  }
+}
+@media (max-width: 639px) {
+  .dashboard {
+    gap: var(--ds-space-6);
+  }
+  .summary {
+    flex-wrap: wrap;
+    padding: var(--ds-space-6) var(--ds-space-4);
+  }
+  .summary p {
+    display: none;
+  }
+  .listHeading {
+    padding: var(--ds-space-6) var(--ds-space-4);
+  }
+  .viewList {
+    padding-inline: var(--ds-space-4);
+  }
+  .viewRow {
+    gap: var(--ds-space-3);
+  }
+  .viewIcon {
+    width: 32px;
+    height: 36px;
+  }
+  .viewContent {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .viewMetadata {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--ds-space-3);
+  }
+  .openButton {
+    grid-column: 1;
+    grid-row: auto;
+    justify-self: start;
+  }
+}

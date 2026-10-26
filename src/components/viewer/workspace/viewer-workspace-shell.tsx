@@ -1,6 +1,8 @@
+"use client";
+
 import ViewerSidebar from "@/src/components/viewer/workspace/viewer-sidebar";
 import WorkspaceTopbar from "@/src/components/workspace/workspace-topbar";
-import type { ReactNode } from "react";
+import { useCallback, useState, type ReactNode } from "react";
 
 type ViewerWorkspaceShellProps = {
   children: ReactNode;
@@ -9,14 +11,34 @@ type ViewerWorkspaceShellProps = {
 export default function ViewerWorkspaceShell({
   children,
 }: ViewerWorkspaceShellProps) {
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const closeMobileSidebar = useCallback(() => setMobileSidebarOpen(false), []);
+
   return (
-    <div className="min-h-screen bg-[#f8f7fb] text-slate-900">
-      <ViewerSidebar />
+    <div className="min-h-screen bg-canvas text-ink">
+      <a className="ui-skip-link" href="#viewer-content">
+        Đến nội dung chính
+      </a>
+      <ViewerSidebar
+        mobileOpen={mobileSidebarOpen}
+        onMobileClose={closeMobileSidebar}
+      />
 
       <div className="min-h-screen lg:ml-64">
-        <WorkspaceTopbar title="Workspace người xem" />
+        <WorkspaceTopbar
+          title="Không gian người xem"
+          onMenuClick={() => setMobileSidebarOpen(true)}
+          menuOpen={mobileSidebarOpen}
+          menuId="viewer-mobile-navigation"
+        />
 
-        <main className="px-4 py-5 sm:px-6 lg:px-6">{children}</main>
+        <main
+          className="px-5 py-8 outline-none sm:px-8 sm:py-10 lg:px-10 xl:px-12"
+          id="viewer-content"
+          tabIndex={-1}
+        >
+          {children}
+        </main>
       </div>
     </div>
   );

@@ -1,0 +1,83 @@
+.desktop {
+  display: none;
+}
+.brand {
+  display: flex;
+  min-height: 80px;
+  flex-shrink: 0;
+  align-items: center;
+  padding-inline: var(--ds-space-6);
+  border-bottom: 1px solid var(--ds-line);
+}
+.navigation {
+  flex: 1;
+  overflow-y: auto;
+  padding: 28px var(--ds-space-4);
+}
+.navigation p {
+  margin-bottom: var(--ds-space-4);
+  padding-inline: 14px;
+  color: var(--ds-muted);
+  font-size: 12px;
+}
+.navigation ul {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.navigation a {
+  overflow-wrap: anywhere;
+}
+.footer {
+  padding: var(--ds-space-4);
+  border-top: 1px solid var(--ds-line);
+}
+.mobilePanel {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: min(320px, calc(100% - 32px));
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-right: 1px solid var(--ds-line);
+  background: var(--ds-surface);
+  color: var(--ds-ink);
+}
+.mobilePanel[open] {
+  display: flex;
+  flex-direction: column;
+  animation: ui-drawer-enter var(--ds-motion-enter) var(--ds-ease);
+}
+.mobilePanel::backdrop {
+  background: #172d3766;
+}
+.mobilePanel .brand {
+  min-height: 88px;
+  padding-right: 56px;
+  padding-left: var(--ds-space-4);
+}
+.mobilePanel .brand a {
+  gap: 8px;
+  font-size: 16px;
+}
+.closeButton {
+  position: absolute;
+  top: 20px;
+  right: 8px;
+}
+@media (min-width: 1024px) {
+  .desktop {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 40;
+    display: flex;
+    width: 256px;
+    height: 100dvh;
+    flex-direction: column;
+    border-right: 1px solid var(--ds-line);
+    background: var(--ds-surface);
+  }
+}

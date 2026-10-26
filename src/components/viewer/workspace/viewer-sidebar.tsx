@@ -1,167 +1,162 @@
 "use client";
 
 import AppLink from "@/src/components/app-link";
+import BrandMark from "@/src/components/common/brand-mark";
+import {
+  CloseIcon,
+  DashboardIcon,
+  TableIcon,
+  WorkspaceSwitchIcon,
+} from "@/src/components/common/icons";
 import { internalPath } from "@/src/lib/app-path";
 import { usePathname } from "next/navigation";
-import type { ReactElement, SVGProps } from "react";
+import { useEffect, useRef } from "react";
+import styles from "./viewer-navigation.module.css";
 
-type IconProps = SVGProps<SVGSVGElement>;
+type ViewerSidebarProps = { mobileOpen: boolean; onMobileClose: () => void };
 
-type NavigationItem = {
-  href: string;
-  label: string;
-  Icon: (props: IconProps) => ReactElement;
-};
-
-function DashboardIcon(props: IconProps) {
-  return (
-    <svg
-      aria-hidden="true"
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="1.8"
-      viewBox="0 0 24 24"
-      {...props}
-    >
-      <rect height="8" rx="1.5" width="8" x="3" y="3" />
-      <rect height="8" rx="1.5" width="8" x="13" y="3" />
-      <rect height="8" rx="1.5" width="8" x="3" y="13" />
-      <rect height="8" rx="1.5" width="8" x="13" y="13" />
-    </svg>
-  );
-}
-
-function SharedViewIcon(props: IconProps) {
-  return (
-    <svg
-      aria-hidden="true"
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="1.8"
-      viewBox="0 0 24 24"
-      {...props}
-    >
-      <rect height="14" rx="2" width="18" x="3" y="5" />
-      <path d="M3 10h18" />
-      <path d="M8 5v14" />
-      <path d="M15 14h3" />
-    </svg>
-  );
-}
-
-function TableIcon(props: IconProps) {
-  return (
-    <svg
-      aria-hidden="true"
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="1.8"
-      viewBox="0 0 24 24"
-      {...props}
-    >
-      <rect height="16" rx="2" width="18" x="3" y="4" />
-      <path d="M3 10h18M8 10v10M16 10v10" />
-    </svg>
-  );
-}
-
-function WorkspaceSwitchIcon(props: IconProps) {
-  return (
-    <svg
-      aria-hidden="true"
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="1.8"
-      viewBox="0 0 24 24"
-      {...props}
-    >
-      <path d="M7 7h11m-3-3 3 3-3 3" />
-      <path d="M17 17H6m3-3-3 3 3 3" />
-    </svg>
-  );
-}
-
-const navigationItems: NavigationItem[] = [
-  {
-    href: "/viewer/dashboard",
-    label: "Tổng quan",
-    Icon: DashboardIcon,
-  },
-  {
-    href: "/viewer/shared",
-    label: "Được chia sẻ với tôi",
-    Icon: SharedViewIcon,
-  },
+const navigationItems = [
+  { href: "/viewer/dashboard", label: "Tổng quan", Icon: DashboardIcon },
+  { href: "/viewer/shared", label: "Được chia sẻ với tôi", Icon: TableIcon },
 ];
 
-function isActiveRoute(pathname: string, href: string) {
-  return pathname === href || pathname.startsWith(`${href}/`);
-}
-
-export default function ViewerSidebar() {
-  const pathname = internalPath(usePathname());
-
+function NavigationContent({
+  pathname,
+  onNavigate,
+}: {
+  pathname: string;
+  onNavigate: () => void;
+}) {
   return (
-    <aside className="hidden h-screen w-64 shrink-0 border-r border-slate-100 bg-white shadow-[1px_0_3px_rgba(15,23,42,0.04)] lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:flex-col">
-      <div className="border-b border-slate-100 px-5 py-5">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-md bg-blue-700 text-white shadow-[0_8px_18px_rgba(30,58,138,0.2)]">
-            <TableIcon className="h-5 w-5" />
-          </div>
-          <div className="min-w-0">
-            <p className="truncate text-base font-black tracking-tight text-blue-900">
-              Sheet2Web
-            </p>
-            <p className="truncate text-sm font-medium text-slate-500">
-              Workspace người xem
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <nav className="flex-1 px-4 py-5">
-        <ul className="space-y-2">
-          {navigationItems.map(({ href, label, Icon }) => {
-            const active = isActiveRoute(pathname, href);
-            return (
-              <li key={href}>
-                <AppLink
-                  className={`relative flex h-12 items-center gap-3 rounded-md px-3 text-sm font-semibold transition-colors ${
-                    active
-                      ? "bg-blue-50 text-blue-900"
-                      : "text-slate-600 hover:bg-slate-50 hover:text-blue-900"
-                  }`}
-                  href={href}
-                >
-                  <Icon className="h-5 w-5 shrink-0" />
-                  <span className="truncate">{label}</span>
-                  {active ? (
-                    <span className="absolute right-0 top-2.5 h-7 w-1 rounded-l-full bg-blue-700" />
-                  ) : null}
-                </AppLink>
-              </li>
-            );
-          })}
-        </ul>
-      </nav>
-
-      <div className="border-t border-slate-100 p-4">
+    <>
+      <div className={styles.brand}>
         <AppLink
-          className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-4 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
+          className="ui-brand"
           href="/"
+          aria-label="Sheet2Web, chọn không gian làm việc"
+          onClick={onNavigate}
         >
-          <WorkspaceSwitchIcon className="h-5 w-5" />
-          Đổi workspace
+          <BrandMark />
+          <span>Sheet2Web</span>
         </AppLink>
       </div>
-    </aside>
+      <nav className={styles.navigation} aria-label="Điều hướng người xem">
+        <p>Không gian người xem</p>
+        <ul>
+          {navigationItems.map(({ href, label, Icon }) => (
+            <li key={href}>
+              <AppLink
+                className="ui-nav-link"
+                aria-current={
+                  pathname === href || pathname.startsWith(`${href}/`)
+                    ? "page"
+                    : undefined
+                }
+                href={href}
+                onClick={onNavigate}
+              >
+                <Icon className="h-5 w-5 shrink-0" />
+                <span>{label}</span>
+              </AppLink>
+            </li>
+          ))}
+        </ul>
+      </nav>
+      <div className={styles.footer}>
+        <AppLink
+          className="ui-button w-full"
+          data-variant="outlined"
+          href="/"
+          aria-label="Đổi không gian làm việc"
+          onClick={onNavigate}
+        >
+          <WorkspaceSwitchIcon />
+          Đổi không gian
+        </AppLink>
+      </div>
+    </>
+  );
+}
+
+export default function ViewerSidebar({
+  mobileOpen,
+  onMobileClose,
+}: ViewerSidebarProps) {
+  const pathname = internalPath(usePathname());
+  const mobileDialogRef = useRef<HTMLDialogElement>(null);
+
+  useEffect(() => {
+    const dialog = mobileDialogRef.current;
+    if (!mobileOpen || !dialog) return;
+    const previousFocus = document.activeElement as HTMLElement | null;
+    const previousOverflow = document.body.style.overflow;
+    const desktop = window.matchMedia("(min-width: 1024px)");
+    const closeOnDesktop = (event: MediaQueryListEvent) => {
+      if (event.matches) onMobileClose();
+    };
+    document.body.style.overflow = "hidden";
+    dialog.showModal();
+    desktop.addEventListener("change", closeOnDesktop);
+    return () => {
+      dialog.close();
+      document.body.style.overflow = previousOverflow;
+      desktop.removeEventListener("change", closeOnDesktop);
+      if (previousFocus?.isConnected)
+        previousFocus.focus({ preventScroll: true });
+    };
+  }, [mobileOpen, onMobileClose]);
+
+  return (
+    <>
+      <aside className={styles.desktop}>
+        <NavigationContent pathname={pathname} onNavigate={onMobileClose} />
+      </aside>
+      <dialog
+        className={styles.mobilePanel}
+        ref={mobileDialogRef}
+        id="viewer-mobile-navigation"
+        aria-label="Menu người xem"
+        onKeyDown={(event) => {
+          if (event.key !== "Tab") return;
+          const controls = event.currentTarget.querySelectorAll<HTMLElement>(
+            "a[href], button:not([disabled])",
+          );
+          const first = controls[0];
+          const last = controls[controls.length - 1];
+          if (event.shiftKey && document.activeElement === first) {
+            event.preventDefault();
+            last?.focus();
+          } else if (!event.shiftKey && document.activeElement === last) {
+            event.preventDefault();
+            first?.focus();
+          }
+        }}
+        onCancel={(event) => {
+          event.preventDefault();
+          onMobileClose();
+        }}
+        onClick={(event) => {
+          if (event.target !== event.currentTarget) return;
+          const bounds = event.currentTarget.getBoundingClientRect();
+          if (
+            event.clientX < bounds.left ||
+            event.clientX > bounds.right ||
+            event.clientY < bounds.top ||
+            event.clientY > bounds.bottom
+          )
+            onMobileClose();
+        }}
+      >
+        <button
+          className={`ui-icon-button ${styles.closeButton}`}
+          aria-label="Đóng menu"
+          type="button"
+          onClick={onMobileClose}
+        >
+          <CloseIcon />
+        </button>
+        <NavigationContent pathname={pathname} onNavigate={onMobileClose} />
+      </dialog>
+    </>
   );
 }

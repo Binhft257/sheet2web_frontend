@@ -1,0 +1,221 @@
+﻿.page {
+  display: flex;
+  width: 100%;
+  max-width: 1240px;
+  margin-inline: auto;
+  flex-direction: column;
+  gap: var(--ds-space-8);
+}
+.panel {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--ds-line);
+  border-radius: var(--ds-radius-panel);
+  background: var(--ds-surface);
+}
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--ds-space-4) var(--ds-space-6);
+  padding: var(--ds-space-6);
+  border-bottom: 1px solid var(--ds-line);
+}
+.searchField {
+  width: 100%;
+  max-width: 440px;
+  min-width: 0;
+}
+.searchInput {
+  position: relative;
+}
+.searchInput > svg {
+  position: absolute;
+  top: 50%;
+  left: 14px;
+  width: 18px;
+  height: 18px;
+  color: var(--ds-muted);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+.searchInput input {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 10px 14px 10px 42px;
+  border: 1px solid var(--ds-line);
+  border-radius: var(--ds-radius-control);
+  background: var(--ds-surface);
+  color: var(--ds-ink);
+  font-size: 14px;
+  line-height: 1.5;
+  transition:
+    border-color var(--ds-motion-fast),
+    box-shadow var(--ds-motion-fast);
+}
+.searchInput input::placeholder {
+  color: var(--ds-muted);
+}
+.searchInput input:focus-visible {
+  border-color: var(--ds-primary);
+  outline: 3px solid var(--ds-primary);
+  outline-offset: 2px;
+}
+.sortHint {
+  margin-bottom: 12px;
+  color: var(--ds-muted);
+  font-size: 12px;
+}
+.sortHint span {
+  color: var(--ds-ink);
+  font-weight: 500;
+}
+.desktop {
+  display: none;
+}
+.table {
+  min-width: 1072px;
+  table-layout: fixed;
+}
+.table th,
+.table td {
+  padding-inline: 20px;
+}
+.table td {
+  overflow-wrap: anywhere;
+}
+.table td:last-child {
+  padding-inline: 12px;
+}
+.viewName {
+  color: var(--ds-ink);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.owner p {
+  color: var(--ds-ink);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.owner span {
+  display: block;
+  margin-top: 4px;
+  color: var(--ds-muted);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.numeric {
+  font-variant-numeric: tabular-nums;
+}
+.openButton {
+  white-space: nowrap;
+}
+.scrollHint {
+  padding: 12px 24px;
+  border-top: 1px solid var(--ds-line);
+  color: var(--ds-muted);
+  font-size: 12px;
+}
+.mobile {
+  padding-inline: var(--ds-space-4);
+}
+.card {
+  padding-block: var(--ds-space-6);
+}
+.card + .card {
+  border-top: 1px solid var(--ds-line);
+}
+.cardHeading {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--ds-space-3);
+}
+.viewIcon {
+  display: flex;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--ds-radius-control);
+  background: var(--ds-canvas);
+  color: var(--ds-muted);
+}
+.viewIcon svg {
+  width: 20px;
+  height: 20px;
+}
+.cardHeading h3 {
+  min-width: 0;
+  align-self: center;
+  color: var(--ds-ink);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.cardDetails {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--ds-space-4);
+  margin-top: var(--ds-space-6);
+}
+.cardOwner {
+  grid-column: 1 / -1;
+}
+.cardDetails dt {
+  margin-bottom: 6px;
+  color: var(--ds-muted);
+  font-size: 12px;
+}
+.cardDetails dd {
+  color: var(--ds-ink);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.cardAction {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--ds-space-6);
+}
+.cardAction button {
+  width: 100%;
+}
+.loading {
+  padding-inline: var(--ds-space-6);
+}
+.loadingRow {
+  display: flex;
+  min-height: 100px;
+  align-items: center;
+  gap: var(--ds-space-4);
+  padding-block: var(--ds-space-6);
+}
+.loadingRow + .loadingRow {
+  border-top: 1px solid var(--ds-line);
+}
+@media (min-width: 768px) {
+  .desktop {
+    display: block;
+  }
+  .mobile {
+    display: none;
+  }
+}
+@media (max-width: 639px) {
+  .page {
+    gap: var(--ds-space-6);
+  }
+  .toolbar {
+    padding: 20px 16px;
+    gap: var(--ds-space-3);
+  }
+  .searchField {
+    max-width: none;
+  }
+  .sortHint {
+    margin-bottom: 0;
+  }
+}
