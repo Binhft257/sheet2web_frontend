@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import BrandMark from "@/src/components/common/brand-mark";
+import styles from "@/src/components/viewer/published-view.module.css";
 
 type ViewerShellProps = {
   children: ReactNode;
@@ -6,8 +8,14 @@ type ViewerShellProps = {
 
 export default function ViewerShell({ children }: ViewerShellProps) {
   return (
-    <main className="min-h-screen bg-[#f8f7fb] px-4 py-6 text-slate-900 sm:px-6 lg:px-8">
-      <div className="mx-auto w-full">{children}</div>
+    <main className={styles.shell}>
+      <div className={styles.shellContent}>
+        <div className={styles.masthead}>
+          <BrandMark />
+          <span>Sheet2Web</span>
+        </div>
+        {children}
+      </div>
     </main>
   );
 }

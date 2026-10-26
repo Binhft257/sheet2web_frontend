@@ -10,7 +10,9 @@ import { usePublishedView } from "@/src/hooks/viewer/use-published-view";
 import { ViewBySlugError } from "@/src/services/view.service";
 import type { ThemePreset, ViewJsonObject } from "@/src/types/view";
 import AppLink from "@/src/components/app-link";
+import { WarningIcon } from "@/src/components/common/icons";
 import { useEffect, useMemo, useState } from "react";
+import styles from "./published-view.module.css";
 
 type PublishedViewPageProps = {
   slug: string;
@@ -60,20 +62,25 @@ function formatDateTime(dateTime: string | null | undefined) {
 function LoadingState() {
   return (
     <ViewerShell>
-      <div className="space-y-6">
-        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
-          <div className="h-9 w-72 animate-pulse rounded bg-slate-100" />
-          <div className="mt-3 h-5 w-96 max-w-full animate-pulse rounded bg-slate-100" />
+      <div
+        className={styles.view}
+        role="status"
+        aria-label="Đang tải view"
+        aria-busy="true"
+      >
+        <div className={styles.loadingHeader} aria-hidden="true">
+          <span className={`ui-skeleton ${styles.loadingTitle}`} />
+          <span className={`ui-skeleton ${styles.loadingInfo}`} />
         </div>
-        <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+        <div className={styles.loadingTable} aria-hidden="true">
           {Array.from({ length: 8 }).map((_, rowIndex) => (
             <div
-              className="grid grid-cols-4 gap-5 border-b border-slate-100 px-5 py-4 last:border-b-0"
+              className={styles.loadingRow}
               key={`viewer-loading-${rowIndex}`}
             >
               {Array.from({ length: 4 }).map((__, cellIndex) => (
                 <div
-                  className="h-5 animate-pulse rounded bg-slate-100"
+                  className="ui-skeleton h-5"
                   key={`viewer-loading-${rowIndex}-${cellIndex}`}
                 />
               ))}
@@ -95,13 +102,13 @@ function ErrorState({ status }: { status?: number }) {
 
   return (
     <ViewerShell>
-      <div className="mx-auto mt-20 max-w-xl rounded-lg border border-slate-200 bg-white px-6 py-10 text-center shadow-[0_18px_60px_rgba(15,23,42,0.10)]">
-        <p className="text-2xl font-bold text-slate-900">{title}</p>
+      <div className={styles.error} role="alert">
+        <span className={styles.stateIcon}>
+          <WarningIcon />
+        </span>
+        <h1>{title}</h1>
         {status === 403 ? (
-          <AppLink
-            className="mt-6 inline-flex h-11 items-center justify-center rounded-md border border-blue-700 bg-blue-700 px-6 text-base font-bold text-white transition-colors hover:border-blue-800 hover:bg-blue-800"
-            href="/sign-in"
-          >
+          <AppLink className="ui-button mt-6" href="/sign-in">
             Đăng nhập
           </AppLink>
         ) : null}

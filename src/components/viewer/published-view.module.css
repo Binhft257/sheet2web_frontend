@@ -1,0 +1,317 @@
+﻿.shell {
+  min-height: 100dvh;
+  padding: 24px 20px 40px;
+  background: var(--ds-canvas);
+  color: var(--ds-ink);
+}
+.shellContent {
+  width: 100%;
+  max-width: 1600px;
+  margin-inline: auto;
+}
+.masthead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: var(--ds-space-6);
+  color: var(--ds-ink);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.4px;
+}
+.masthead svg {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  color: var(--ds-primary);
+}
+.view {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--ds-space-6);
+}
+.header {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--ds-line);
+  border-radius: var(--ds-radius-panel);
+  background: var(--ds-surface);
+}
+.headingRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--ds-space-6);
+  padding: var(--ds-space-8);
+}
+.identity {
+  min-width: 0;
+  flex: 1 1 320px;
+}
+.identity > h1,
+.identity > h2 {
+  color: var(--ds-ink);
+  font-size: clamp(26px, 2.4vw, 32px);
+  font-weight: 600;
+  letter-spacing: -0.8px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.metadata {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 20px;
+  margin-top: var(--ds-space-3);
+  color: var(--ds-muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.metadata span {
+  overflow-wrap: anywhere;
+}
+.metadata span:first-child {
+  color: var(--ds-primary);
+  font-weight: 500;
+}
+.segmented {
+  display: flex;
+  max-width: 100%;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--ds-line);
+  border-radius: var(--ds-radius-control);
+  background: var(--ds-canvas);
+}
+.choice {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--ds-muted);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+  cursor: pointer;
+  transition:
+    background var(--ds-motion-fast),
+    color var(--ds-motion-fast);
+}
+.choice:hover {
+  background: var(--ds-neutral-soft);
+  color: var(--ds-ink);
+}
+.choice[aria-pressed="true"] {
+  border-color: var(--ds-line);
+  background: var(--ds-surface);
+  color: var(--ds-primary);
+  box-shadow: 0 1px 2px #172d3708;
+}
+.choice:focus-visible,
+.interval select:focus-visible {
+  outline: 3px solid var(--ds-primary);
+  outline-offset: 2px;
+}
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ds-space-4) var(--ds-space-6);
+  padding: 20px 32px;
+  border-top: 1px solid var(--ds-line);
+}
+.controls {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ds-space-3);
+}
+.interval {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  gap: var(--ds-space-3);
+  color: var(--ds-muted);
+  font-size: 13px;
+}
+.interval select {
+  min-width: 100px;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--ds-line);
+  border-radius: var(--ds-radius-control);
+  background: var(--ds-surface);
+  color: var(--ds-ink);
+  cursor: pointer;
+}
+.refreshHint {
+  color: var(--ds-muted);
+  font-size: 12px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+.tablePanel {
+  min-width: 0;
+  border-radius: var(--ds-radius-panel);
+}
+.view[data-embedded] .headingRow {
+  padding: 0;
+  gap: var(--ds-space-4);
+}
+.view[data-embedded] .toolbar {
+  margin-top: var(--ds-space-4);
+  padding: 16px 0 0;
+}
+.view[data-embedded] .interval select {
+  min-height: 44px;
+}
+.tableViewport {
+  max-width: 100%;
+  overscroll-behavior: contain;
+}
+.tableViewport:focus-visible {
+  outline: 3px solid var(--ds-primary);
+  outline-offset: -3px;
+}
+.tableHint {
+  display: none;
+  padding: 12px 20px;
+  border-top: 1px solid var(--ds-line);
+  background: var(--ds-surface);
+  color: var(--ds-muted);
+  font-size: 12px;
+  line-height: 1.7;
+}
+@media (max-width: 767px) {
+  .tableHint {
+    display: block;
+  }
+}
+.empty,
+.error {
+  padding: 48px 24px;
+  border: 1px solid var(--ds-line);
+  border-radius: var(--ds-radius-panel);
+  background: var(--ds-surface);
+  text-align: center;
+}
+.empty h2,
+.empty h3 {
+  margin-top: var(--ds-space-4);
+  color: var(--ds-ink);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.empty p {
+  max-width: 560px;
+  margin: 8px auto 0;
+  color: var(--ds-muted);
+  font-size: 14px;
+}
+.stateIcon {
+  display: flex;
+  width: 48px;
+  height: 48px;
+  margin-inline: auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--ds-radius-panel);
+  background: var(--ds-primary-soft);
+  color: var(--ds-primary);
+}
+.stateIcon svg {
+  width: 24px;
+  height: 24px;
+}
+.error {
+  width: 100%;
+  max-width: 640px;
+  margin: 48px auto 0;
+}
+.error h1 {
+  margin-top: var(--ds-space-6);
+  color: var(--ds-ink);
+  font-size: clamp(22px, 3vw, 26px);
+  font-weight: 600;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.error .stateIcon {
+  background: var(--ds-warning-soft);
+  color: var(--ds-warning);
+}
+.loadingHeader {
+  padding: var(--ds-space-8);
+  border: 1px solid var(--ds-line);
+  border-radius: var(--ds-radius-panel);
+  background: var(--ds-surface);
+}
+.loadingTitle {
+  display: block;
+  width: 70%;
+  max-width: 380px;
+  height: 36px;
+}
+.loadingInfo {
+  display: block;
+  width: 90%;
+  max-width: 480px;
+  height: 20px;
+  margin-top: var(--ds-space-4);
+}
+.loadingTable {
+  overflow: hidden;
+  border: 1px solid var(--ds-line);
+  border-radius: var(--ds-radius-panel);
+  background: var(--ds-surface);
+}
+.loadingRow {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 20px;
+  padding: 20px 24px;
+}
+.loadingRow + .loadingRow {
+  border-top: 1px solid var(--ds-line);
+}
+@media (min-width: 640px) {
+  .shell {
+    padding: 32px 32px 48px;
+  }
+}
+@media (max-width: 639px) {
+  .headingRow {
+    padding: 20px;
+    gap: var(--ds-space-4);
+  }
+  .toolbar {
+    padding: 16px 20px;
+  }
+  .identity {
+    flex-basis: 100%;
+  }
+  .segmented {
+    gap: 2px;
+  }
+  .choice {
+    padding-inline: 12px;
+  }
+  .loadingHeader {
+    padding: 24px 20px;
+  }
+  .loadingRow {
+    gap: 12px;
+    padding-inline: 20px;
+  }
+  .error {
+    padding: 32px 20px;
+    margin-top: 24px;
+  }
+}
