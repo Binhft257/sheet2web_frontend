@@ -45,13 +45,15 @@ export default function WizardConfigStep({
           Quay lại
         </SharedButton>
         <div className="flex flex-wrap gap-3">
-          <SharedButton
-            variant="outlined"
-            disabled={wizard.isDraftSaving}
-            onClick={() => wizard.saveDraft(false)}
-          >
-            {wizard.isDraftSaving ? "Đang lưu..." : "Lưu nháp"}
-          </SharedButton>
+          {!wizard.isEditingPublishedView ? (
+            <SharedButton
+              variant="outlined"
+              disabled={wizard.isDraftSaving}
+              onClick={() => wizard.saveDraft(false)}
+            >
+              {wizard.isDraftSaving ? "Đang lưu..." : "Lưu nháp"}
+            </SharedButton>
+          ) : null}
           <SharedButton
             disabled={wizard.isDraftSaving}
             onClick={wizard.handleContinueFromConfig}

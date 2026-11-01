@@ -312,6 +312,8 @@ export default function useViewWizard({
   }
 
   async function saveDraft(goNext: boolean) {
+    if (isEditingPublishedView) return null;
+
     if (!selectedDataSourceId) {
       showToast("error", "Vui lòng chọn nguồn dữ liệu.");
       goToStep(1);
@@ -328,7 +330,10 @@ export default function useViewWizard({
 
     try {
       const savedView = viewId
-        ? await updateExistingViewSettings(viewId)
+        ? await updateViewMutation.mutateAsync({
+            id: viewId,
+            body: buildUpdateViewBody(formValues, accessMode),
+          })
         : await createViewMutation.mutateAsync(
             buildCreateViewBody(selectedDataSourceId, formValues, accessMode),
           );
