@@ -6,31 +6,30 @@ import {
   useViews,
 } from "@/src/hooks/owner/use-views";
 import { useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState, type ChangeEvent } from "react";
-import type {
-  OwnerView,
-  ViewStatusFilter,
-  ViewAccessModeFilter,
-} from "@/src/types/view";
+import { useEffect, useMemo, useState, type ChangeEvent } from "react";
+import type { OwnerView } from "@/src/types/view";
 import {
+  getAbsoluteUrl,
   getErrorMessage,
   isPublishedView,
 } from "@/src/features/owner/views/view-utils";
 import type { ViewToast } from "@/src/features/owner/views/types";
+import useViewListNavigation from "./use-view-list-navigation";
 
 const VIEWS_LIMIT = 10;
 
 export default function useViewsPage() {
   const queryClient = useQueryClient();
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<ViewStatusFilter | "">("");
-  const [accessModeFilter, setAccessModeFilter] = useState<
-    ViewAccessModeFilter | ""
-  >("");
+  const navigation = useViewListNavigation();
+  const {
+    page,
+    search,
+    statusFilter,
+    accessModeFilter,
+    detailViewId,
+    restoreScroll,
+  } = navigation;
   const [toastMessage, setToastMessage] = useState<ViewToast | null>(null);
-  const [detailViewId, setDetailViewId] = useState<string | null>(null);
-  const [sharingView, setSharingView] = useState<OwnerView | null>(null);
 
   const viewsQuery = useViews({
     page,
@@ -41,6 +40,10 @@ export default function useViewsPage() {
   });
   const publishViewMutation = usePublishView();
   const deleteViewMutation = useDeleteView();
+
+  useEffect(() => {
+    if (!viewsQuery.isPending) return restoreScroll();
+  }, [viewsQuery.isPending, restoreScroll]);
 
   const views = useMemo(() => viewsQuery.data?.items ?? [], [viewsQuery.data]);
   const paginationMeta = viewsQuery.data?.meta ?? {
@@ -63,18 +66,15 @@ export default function useViewsPage() {
   }
 
   function handleSearchChange(event: ChangeEvent<HTMLInputElement>) {
-    setSearch(event.target.value);
-    setPage(1);
+    navigation.changeSearch(event.target.value);
   }
 
   function handleStatusChange(event: ChangeEvent<HTMLSelectElement>) {
-    setStatusFilter(event.target.value as ViewStatusFilter | "");
-    setPage(1);
+    navigation.changeStatus(event.target.value);
   }
 
   function handleAccessModeChange(event: ChangeEvent<HTMLSelectElement>) {
-    setAccessModeFilter(event.target.value as ViewAccessModeFilter | "");
-    setPage(1);
+    navigation.changeAccess(event.target.value);
   }
 
   async function handlePublish(view: OwnerView) {
@@ -88,6 +88,9 @@ export default function useViewsPage() {
           : `Xuất bản thành công: ${result.url}`,
       });
       await queryClient.invalidateQueries({ queryKey: ["views", "my"] });
+      await queryClient.invalidateQueries({
+        queryKey: ["views", "detail", view.id],
+      });
     } catch (error) {
       showToast({
         type: "error",
@@ -103,6 +106,7 @@ export default function useViewsPage() {
 
     try {
       await deleteViewMutation.mutateAsync(view.id);
+      navigation.closeDetail();
       showToast({
         type: "success",
         message: "Đã xóa view thành công.",
@@ -116,6 +120,18 @@ export default function useViewsPage() {
     }
   }
 
+  async function handleCopyLink(url: string) {
+    try {
+      await navigator.clipboard.writeText(getAbsoluteUrl(url));
+      showToast({ type: "success", message: "Đã sao chép link truy cập." });
+    } catch {
+      showToast({
+        type: "error",
+        message: "Không thể sao chép link. Vui lòng thử lại.",
+      });
+    }
+  }
+
   return {
     page,
     search,
@@ -123,7 +139,6 @@ export default function useViewsPage() {
     accessModeFilter,
     toastMessage,
     detailViewId,
-    sharingView,
     views,
     paginationMeta,
     tableErrorMessage,
@@ -138,12 +153,13 @@ export default function useViewsPage() {
     handleAccessModeChange,
     handlePublish,
     handleDelete,
+    handleCopyLink,
+    clearFilters: navigation.clearFilters,
     showToast,
-    changePage: setPage,
-    showDetail: setDetailViewId,
-    closeDetail: () => setDetailViewId(null),
-    showSharing: setSharingView,
-    closeSharing: () => setSharingView(null),
+    changePage: navigation.changePage,
+    showDetail: navigation.showDetail,
+    closeDetail: navigation.closeDetail,
+    openEditor: navigation.openEditor,
     dismissToast: () => setToastMessage(null),
     retry: () => viewsQuery.refetch(),
   };

@@ -1,5 +1,9 @@
 "use client";
 
+import AuthField, { AuthMessage } from "@/src/components/auth/auth-field";
+import styles from "./auth.module.css";
+import Modal from "@/src/components/common/modal";
+
 import { SharedButton } from "@/src/components/share";
 import {
   checkActivationCode,
@@ -66,6 +70,7 @@ export default function RetryActivationModal({
     try {
       const draft = JSON.parse(rawDraft) as RetryActivationDraft;
       if (draft.step === "retry" || draft.step === "verify") {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- Restore the existing activation draft.
         setStep(draft.step);
       }
       if (typeof draft.email === "string") {
@@ -123,6 +128,7 @@ export default function RetryActivationModal({
 
   useEffect(() => {
     if (open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Reset the existing feedback when the dialog opens.
       setErrorMessage(null);
       setInfoMessage(null);
       return;
@@ -222,102 +228,65 @@ export default function RetryActivationModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
-      <section className="w-full max-w-md rounded-xl border border-neutral-200 bg-white p-6 shadow-[0_8px_40px_rgba(0,0,0,0.18)] sm:p-7">
-        <div className="mb-4 flex items-start justify-between gap-4">
-          <h2 className="text-lg font-semibold text-slate-900 sm:text-xl">
-            Kích hoạt tài khoản
-          </h2>
-          <button
-            aria-label="Đóng"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-slate-700"
-            onClick={handleClose}
-            type="button"
-          >
-            ×
-          </button>
-        </div>
-
-        <p className="mb-4 text-sm text-slate-600">
-          Tài khoản của bạn chưa được kích hoạt. Vui lòng gửi lại mã xác minh để
-          kích hoạt tài khoản.
-        </p>
-
+    <Modal
+      open={open}
+      title="Kích hoạt tài khoản"
+      description="Tài khoản của bạn chưa được kích hoạt. Vui lòng gửi lại mã xác minh để kích hoạt tài khoản."
+      onClose={handleClose}
+      size="sm"
+    >
+      <div className="ui-modal-body">
         {infoMessage ? (
-          <p className="mb-4 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
-            {infoMessage}
-          </p>
+          <AuthMessage tone="info">{infoMessage}</AuthMessage>
         ) : null}
-
-        {errorMessage ? (
-          <p className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-            {errorMessage}
-          </p>
-        ) : null}
-
+        {errorMessage ? <AuthMessage>{errorMessage}</AuthMessage> : null}
         {step === "retry" ? (
-          <form className="space-y-4" method="post" onSubmit={handleRetrySubmit}>
-            <div>
-              <label
-                className="mb-1 block text-sm font-medium text-slate-900"
-                htmlFor="retry-email"
-              >
-                Email
-              </label>
-              <input
-                autoComplete="email"
-                className="block w-full rounded-lg border border-neutral-300 bg-neutral-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition-shadow placeholder:text-neutral-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                id="retry-email"
-                name="email"
-                onChange={(event) => setEmail(event.target.value)}
-                placeholder="ten@congty.com"
-                type="email"
-                value={email}
-              />
-            </div>
-
-            <div className="flex items-center justify-end gap-2">
+          <form
+            className={styles.form}
+            method="post"
+            onSubmit={handleRetrySubmit}
+          >
+            <AuthField
+              label="Email"
+              autoComplete="email"
+              id="retry-email"
+              name="email"
+              type="email"
+              placeholder="ten@congty.com"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+            />
+            <div className={styles.modalActions}>
               <SharedButton
                 disabled={isRetryLoading}
                 onClick={handleClose}
-                type="button"
-                variant="secondary"
+                variant="outlined"
               >
                 Hủy
               </SharedButton>
-              <SharedButton
-                disabled={isRetryLoading}
-                type="submit"
-                variant="primary"
-              >
+              <SharedButton disabled={isRetryLoading} type="submit">
                 {isRetryLoading ? "Đang gửi..." : "Gửi lại mã"}
               </SharedButton>
             </div>
           </form>
         ) : (
-          <form className="space-y-4" method="post" onSubmit={handleVerifySubmit}>
+          <form
+            className={styles.form}
+            method="post"
+            onSubmit={handleVerifySubmit}
+          >
             <input name="id" type="hidden" value={activationId ?? ""} />
-
-            <div>
-              <label
-                className="mb-1 block text-sm font-medium text-slate-900"
-                htmlFor="activation-code"
-              >
-                Mã xác minh
-              </label>
-              <input
-                autoComplete="one-time-code"
-                className="block w-full rounded-lg border border-neutral-300 bg-neutral-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition-shadow placeholder:text-neutral-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                id="activation-code"
-                name="code"
-                onChange={(event) => setCode(event.target.value)}
-                placeholder="Nhập mã xác minh"
-                type="text"
-                value={code}
-              />
-            </div>
-
-            <div className="flex items-center justify-end gap-2">
+            <AuthField
+              label="Mã xác minh"
+              autoComplete="one-time-code"
+              id="activation-code"
+              name="code"
+              type="text"
+              placeholder="Nhập mã xác minh"
+              value={code}
+              onChange={(event) => setCode(event.target.value)}
+            />
+            <div className={styles.modalActions}>
               <SharedButton
                 disabled={isVerifyLoading}
                 onClick={() => {
@@ -325,22 +294,17 @@ export default function RetryActivationModal({
                   setCode("");
                   setErrorMessage(null);
                 }}
-                type="button"
-                variant="secondary"
+                variant="outlined"
               >
                 Quay lại
               </SharedButton>
-              <SharedButton
-                disabled={isVerifyLoading}
-                type="submit"
-                variant="primary"
-              >
+              <SharedButton disabled={isVerifyLoading} type="submit">
                 {isVerifyLoading ? "Đang xác minh..." : "Xác minh"}
               </SharedButton>
             </div>
           </form>
         )}
-      </section>
-    </div>
+      </div>
+    </Modal>
   );
 }

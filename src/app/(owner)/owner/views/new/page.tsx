@@ -1,9 +1,11 @@
 import CreateViewWizard from "@/src/components/owner/views/create-view-wizard";
+import { getViewReturnPath } from "@/src/features/owner/views/view-navigation";
 
 type PageProps = {
   searchParams?: Promise<{
     step?: string;
     viewId?: string;
+    returnTo?: string;
   }>;
 };
 
@@ -26,6 +28,7 @@ export default async function Page({ searchParams }: PageProps) {
     <CreateViewWizard
       initialStep={normalizeStep(params?.step)}
       initialViewId={params?.viewId ?? null}
+      returnTo={getViewReturnPath(params?.returnTo)}
     />
   );
 }

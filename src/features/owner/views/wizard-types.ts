@@ -6,6 +6,7 @@ export type WizardStep = 1 | 2 | 3;
 export type CreateViewWizardProps = {
   initialStep?: WizardStep;
   initialViewId?: string | null;
+  returnTo?: string | null;
 };
 
 export type SourceSummary = Pick<

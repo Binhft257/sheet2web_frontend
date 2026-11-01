@@ -12,11 +12,16 @@ import WizardConfigStep from "@/src/components/owner/views/wizard/wizard-config-
 import WizardPublishStep from "@/src/components/owner/views/wizard/wizard-publish-step";
 import useViewWizard from "@/src/features/owner/views/hooks/use-view-wizard";
 import type { CreateViewWizardProps } from "@/src/features/owner/views/wizard-types";
-import { pushAppPath } from "@/src/lib/app-path";
+import { replaceAppPath } from "@/src/lib/app-path";
+import {
+  getViewReturnPath,
+  VIEWS_PATH,
+} from "@/src/features/owner/views/view-navigation";
 
 export default function CreateViewWizard(props: CreateViewWizardProps) {
   const router = useRouter();
   const wizard = useViewWizard(props);
+  const returnTo = getViewReturnPath(props.returnTo);
   return (
     <section className="ui-view-wizard mx-auto flex w-full max-w-[1240px] flex-col gap-8">
       <Toast
@@ -30,9 +35,9 @@ export default function CreateViewWizard(props: CreateViewWizardProps) {
         actions={
           <SharedButton
             variant="outlined"
-            onClick={() => pushAppPath(router, "/owner/views")}
+            onClick={() => replaceAppPath(router, returnTo ?? VIEWS_PATH)}
           >
-            Hủy bỏ
+            {returnTo ? "Quay lại chi tiết" : "Hủy bỏ"}
           </SharedButton>
         }
       />

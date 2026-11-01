@@ -78,24 +78,6 @@ function ViewIcon(props: IconProps) {
   );
 }
 
-function CreateViewIcon(props: IconProps) {
-  return (
-    <svg
-      aria-hidden="true"
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="1.8"
-      viewBox="0 0 24 24"
-      {...props}
-    >
-      <rect height="14" rx="2" width="18" x="3" y="5" />
-      <path d="M3 10h18M12 14v4M10 16h4" />
-    </svg>
-  );
-}
-
 function WorkspaceSwitchIcon(props: IconProps) {
   return (
     <svg
@@ -143,26 +125,13 @@ const navigationItems: NavigationItem[] = [
     Icon: DatabaseIcon,
   },
   {
-    href: "/owner/views/new",
-    label: "Tạo view",
-    Icon: CreateViewIcon,
-  },
-  {
     href: "/owner/views",
-    label: "Quản lý view",
+    label: "Trang dữ liệu",
     Icon: ViewIcon,
   },
 ];
 
 function isActiveRoute(pathname: string, href: string) {
-  if (href === "/owner/views") {
-    return (
-      pathname === href ||
-      (pathname.startsWith(`${href}/`) &&
-        !pathname.startsWith("/owner/views/new"))
-    );
-  }
-
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 

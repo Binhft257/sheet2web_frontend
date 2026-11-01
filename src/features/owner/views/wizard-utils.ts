@@ -1,4 +1,5 @@
 import { appPath } from "@/src/lib/app-path";
+import { getViewReturnPath } from "./view-navigation";
 import type {
   WizardStep,
   SourceSummary,
@@ -18,6 +19,10 @@ export function replaceWizardUrl(viewId: string | null, step: WizardStep) {
   }
 
   const params = new URLSearchParams();
+  const returnTo = getViewReturnPath(
+    new URLSearchParams(window.location.search).get("returnTo"),
+  );
+  if (returnTo) params.set("returnTo", returnTo);
   if (viewId) {
     params.set("viewId", viewId);
   }

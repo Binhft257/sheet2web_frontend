@@ -1,5 +1,9 @@
 ﻿"use client";
 
+import AuthField, { AuthMessage } from "@/src/components/auth/auth-field";
+import styles from "./auth.module.css";
+import AuthShell from "@/src/components/auth/auth-shell";
+
 import { SharedButton } from "@/src/components/share";
 import RetryActivationModal from "@/src/components/auth/RetryActivationModal";
 import { useRouter } from "next/navigation";
@@ -38,8 +42,7 @@ const initialValues: SignInValues = {
   password: "",
 };
 const SIGN_IN_DRAFT_KEY = "sign-in-form-draft";
-const APP_PREFIX =
-  process.env.NODE_ENV === "production" ? "/sheet2web" : "";
+const APP_PREFIX = process.env.NODE_ENV === "production" ? "/sheet2web" : "";
 
 function mapErrors(error: z.ZodError<SignInValues>): SignInErrors {
   const nextErrors: SignInErrors = {};
@@ -52,42 +55,6 @@ function mapErrors(error: z.ZodError<SignInValues>): SignInErrors {
   }
 
   return nextErrors;
-}
-
-function MailIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="h-5 w-5"
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="1.75"
-      viewBox="0 0 24 24"
-    >
-      <rect height="16" rx="2.5" width="20" x="2" y="4" />
-      <path d="m3 6 9 7 9-7" />
-    </svg>
-  );
-}
-
-function LockIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="h-5 w-5"
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="1.75"
-      viewBox="0 0 24 24"
-    >
-      <rect height="11" rx="2.5" width="16" x="4" y="10" />
-      <path d="M8 10V7a4 4 0 1 1 8 0v3" />
-    </svg>
-  );
 }
 
 function EyeIcon() {
@@ -128,24 +95,6 @@ function EyeOffIcon() {
   );
 }
 
-function BrandIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="h-8 w-8 text-blue-500"
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="1.8"
-      viewBox="0 0 24 24"
-    >
-      <rect height="16" rx="2" width="16" x="4" y="4" />
-      <path d="M8 9h8M8 13h8M8 17h5" />
-    </svg>
-  );
-}
-
 export default function SignInForm({
   showRegisteredSuccess = false,
 }: SignInFormProps) {
@@ -174,8 +123,7 @@ export default function SignInForm({
       const timer = window.setTimeout(() => {
         setValues((previous) => ({
           ...previous,
-          email:
-            typeof parsedDraft.email === "string" ? parsedDraft.email : "",
+          email: typeof parsedDraft.email === "string" ? parsedDraft.email : "",
           password: "",
         }));
       }, 0);
@@ -307,145 +255,79 @@ export default function SignInForm({
   };
 
   return (
-    <section className="flex min-h-screen items-center justify-center bg-neutral-50 p-4 sm:p-6 lg:p-8">
-      <div className="w-full max-w-[560px] overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-[0_4px_24px_rgba(0,0,0,0.05)]">
-        <div className="px-5 py-7 sm:px-8 sm:py-9">
-          <div className="mb-7 flex flex-col items-center sm:mb-8">
-            <div className="mb-5 flex items-center gap-2">
-              <BrandIcon />
-              <span className="text-2xl font-semibold text-slate-900">
-                SheetToWeb
-              </span>
-            </div>
-            <h1 className="mb-2 text-center text-2xl font-semibold text-slate-900 sm:text-3xl">
-              Chào mừng trở lại
-            </h1>
-            <p className="text-center text-sm text-slate-600 sm:text-base">
-              Đăng nhập để tiếp tục với không gian làm việc của bạn.
-            </p>
-          </div>
-
-          {showRegisteredSuccess ? (
-            <p className="mb-6 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-center text-sm text-blue-700">
-              Bạn đã đăng ký thành công. Vui lòng đăng nhập.
-            </p>
-          ) : null}
-
-          <form
-            className="space-y-5 sm:space-y-6"
-            method="post"
-            noValidate
-            onSubmit={handleSubmit}
-          >
-            <div className="space-y-2">
-              <label
-                className="block text-sm font-medium text-slate-900"
-                htmlFor="email"
-              >
-                Email
-              </label>
-              <div className="relative">
-                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-neutral-500">
-                  <MailIcon />
-                </div>
-                <input
-                  aria-describedby={errors.email ? "email-error" : undefined}
-                  aria-invalid={Boolean(errors.email)}
-                  className="block w-full rounded-lg border border-neutral-300 bg-neutral-50 py-2.5 pl-10 pr-4 text-sm text-slate-900 transition-shadow outline-none placeholder:text-neutral-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                  id="email"
-                  name="email"
-                  onBlur={handleBlur}
-                  onChange={handleChange}
-                  placeholder="ten@congty.com"
-                  type="email"
-                  value={values.email}
-                />
-              </div>
-              {errors.email ? (
-                <p className="text-sm text-brown-600" id="email-error">
-                  {errors.email}
-                </p>
-              ) : null}
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center justify-between gap-4">
-                <label
-                  className="block text-sm font-medium text-slate-900"
-                  htmlFor="password"
-                >
-                  Mật khẩu
-                </label>
-                <a
-                  className="text-sm font-medium text-blue-500 transition-colors hover:text-blue-600"
-                  href={`${APP_PREFIX}/forgot-password`}
-                >
-                  Quên mật khẩu?
-                </a>
-              </div>
-              <div className="relative">
-                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-neutral-500">
-                  <LockIcon />
-                </div>
-                <input
-                  aria-describedby={
-                    errors.password ? "password-error" : undefined
-                  }
-                  aria-invalid={Boolean(errors.password)}
-                  className="block w-full rounded-lg border border-neutral-300 bg-neutral-50 py-2.5 pl-10 pr-10 text-sm text-slate-900 transition-shadow outline-none placeholder:text-neutral-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                  id="password"
-                  name="password"
-                  onBlur={handleBlur}
-                  onChange={handleChange}
-                  placeholder="••••••••"
-                  type={showPassword ? "text" : "password"}
-                  value={values.password}
-                />
-                <button
-                  aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-neutral-500 transition-colors hover:text-slate-700"
-                  onClick={() => setShowPassword((previous) => !previous)}
-                  type="button"
-                >
-                  {showPassword ? <EyeOffIcon /> : <EyeIcon />}
-                </button>
-              </div>
-              {errors.password ? (
-                <p className="text-sm text-brown-600" id="password-error">
-                  {errors.password}
-                </p>
-              ) : null}
-            </div>
-
-            <SharedButton
-              className="w-full"
-              disabled={isSubmitting}
-              size="lg"
-              type="submit"
-              variant="primary"
-            >
-              {isSubmitting ? "Đang đăng nhập..." : "Đăng nhập"}
-            </SharedButton>
-
-            {submitError ? (
-              <p className="text-center text-sm text-brown-600">
-                {submitError}
-              </p>
-            ) : null}
-          </form>
-
-          <p className="mt-7 text-center text-sm text-slate-600 sm:mt-8">
+    <>
+      <AuthShell
+        title="Chào mừng trở lại"
+        description="Đăng nhập để tiếp tục với không gian làm việc của bạn."
+        footer={
+          <p>
             Chưa có tài khoản?{" "}
-            <a
-              className="font-medium text-blue-500 transition-colors hover:text-blue-600"
-              href={`${APP_PREFIX}/sign-up`}
-            >
+            <a className={styles.link} href={`${APP_PREFIX}/sign-up`}>
               Đăng ký ngay
             </a>
           </p>
-        </div>
-      </div>
-
+        }
+      >
+        {showRegisteredSuccess ? (
+          <AuthMessage tone="success">
+            Bạn đã đăng ký thành công. Vui lòng đăng nhập.
+          </AuthMessage>
+        ) : null}
+        <form
+          className={styles.form}
+          method="post"
+          noValidate
+          onSubmit={handleSubmit}
+        >
+          <AuthField
+            label="Email"
+            id="email"
+            name="email"
+            type="email"
+            placeholder="ten@congty.com"
+            value={values.email}
+            error={errors.email}
+            onBlur={handleBlur}
+            onChange={handleChange}
+          />
+          <AuthField
+            label="Mật khẩu"
+            id="password"
+            name="password"
+            type={showPassword ? "text" : "password"}
+            placeholder="••••••••"
+            value={values.password}
+            error={errors.password}
+            onBlur={handleBlur}
+            onChange={handleChange}
+            labelAction={
+              <a className={styles.link} href={`${APP_PREFIX}/forgot-password`}>
+                Quên mật khẩu?
+              </a>
+            }
+            trailingAction={
+              <button
+                className={styles.visibility}
+                aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                aria-pressed={showPassword}
+                onClick={() => setShowPassword((previous) => !previous)}
+                type="button"
+              >
+                {showPassword ? <EyeOffIcon /> : <EyeIcon />}
+              </button>
+            }
+          />
+          <SharedButton
+            className="w-full"
+            disabled={isSubmitting}
+            size="lg"
+            type="submit"
+          >
+            {isSubmitting ? "Đang đăng nhập..." : "Đăng nhập"}
+          </SharedButton>
+          {submitError ? <AuthMessage>{submitError}</AuthMessage> : null}
+        </form>
+      </AuthShell>
       <RetryActivationModal
         defaultEmail={retryModalEmail}
         onClose={() => setIsRetryModalOpen(false)}
@@ -459,7 +341,6 @@ export default function SignInForm({
         }}
         open={isRetryModalOpen}
       />
-    </section>
+    </>
   );
 }
-

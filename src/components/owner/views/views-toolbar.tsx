@@ -16,7 +16,7 @@ export default function ViewsToolbar(props: ViewsToolbarProps) {
     <div className="ui-views-toolbar">
       <div className="min-w-0">
         <label className="ui-field-label" htmlFor="views-search">
-          Tìm view
+          Tìm trang dữ liệu
         </label>
         <div className="relative">
           <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-muted" />
@@ -24,7 +24,7 @@ export default function ViewsToolbar(props: ViewsToolbarProps) {
             className="ui-form-control pl-11"
             id="views-search"
             onChange={props.onSearchChange}
-            placeholder="Tìm theo tên view…"
+            placeholder="Tìm theo tên trang…"
             type="search"
             value={props.search}
           />

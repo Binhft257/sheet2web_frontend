@@ -1,5 +1,8 @@
 "use client";
 
+import AuthField, { AuthMessage } from "@/src/components/auth/auth-field";
+import styles from "./auth.module.css";
+
 import { SharedButton } from "@/src/components/share";
 import AppLink from "@/src/components/app-link";
 import { appPath, pushAppPath } from "@/src/lib/app-path";
@@ -39,6 +42,7 @@ export default function VerifyCodeForm({ verifyId }: VerifyCodeFormProps) {
     try {
       const parsedDraft = JSON.parse(rawDraft) as { code?: string };
       if (typeof parsedDraft.code === "string") {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- Restore the existing verification draft.
         setCode(parsedDraft.code);
       }
     } catch {
@@ -139,53 +143,35 @@ export default function VerifyCodeForm({ verifyId }: VerifyCodeFormProps) {
 
   return (
     <form
-      className="mt-6 space-y-4"
+      className={styles.form}
       method="post"
       noValidate
       onSubmit={handleSubmit}
     >
       <input name="id" type="hidden" value={verifyId} />
-
-      <div>
-        <label
-          className="mb-1 block text-left text-sm font-medium text-slate-900"
-          htmlFor="code"
-        >
-          Mã xác minh
-        </label>
-        <input
-          autoComplete="one-time-code"
-          className="block w-full rounded-lg border border-neutral-300 bg-neutral-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition-shadow placeholder:text-neutral-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-          id="code"
-          name="code"
-          onChange={(event) => setCode(event.target.value)}
-          placeholder="Nhập mã từ email"
-          type="text"
-          value={code}
-        />
-      </div>
-
+      <AuthField
+        label="Mã xác minh"
+        id="code"
+        name="code"
+        type="text"
+        autoComplete="one-time-code"
+        placeholder="Nhập mã từ email"
+        value={code}
+        onChange={(event) => setCode(event.target.value)}
+      />
       <SharedButton
         className="w-full"
         disabled={isSubmitting}
         size="lg"
         type="submit"
-        variant="primary"
       >
         {isSubmitting ? "Đang kiểm tra mã..." : "Gửi mã xác minh"}
       </SharedButton>
-
-      {submitError ? (
-        <p className="text-sm text-brown-600">{submitError}</p>
-      ) : null}
+      {submitError ? <AuthMessage>{submitError}</AuthMessage> : null}
       {submitMessage ? (
-        <p className="text-sm text-blue-600">{submitMessage}</p>
+        <AuthMessage tone="success">{submitMessage}</AuthMessage>
       ) : null}
-
-      <AppLink
-        className="inline-flex text-sm font-medium text-blue-500 underline transition-colors hover:text-blue-600"
-        href="/sign-in"
-      >
+      <AppLink className={styles.link} href="/sign-in">
         Quay lại đăng nhập
       </AppLink>
     </form>

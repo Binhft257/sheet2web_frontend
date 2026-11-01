@@ -1,0 +1,120 @@
+﻿.workspace {
+  display: flex;
+  width: 100%;
+  max-width: 1240px;
+  margin-inline: auto;
+  flex-direction: column;
+  gap: var(--ds-space-8);
+}
+.state {
+  width: 100%;
+  max-width: 720px;
+  margin: 24px auto;
+  padding: 48px 32px;
+  border: 1px solid var(--ds-line);
+  border-radius: var(--ds-radius-panel);
+  background: var(--ds-surface);
+  text-align: center;
+}
+.workspace .state {
+  max-width: none;
+  margin: 0;
+  padding-block: 64px;
+}
+.icon {
+  display: flex;
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 24px;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--ds-radius-panel);
+  background: var(--ds-primary-soft);
+  color: var(--ds-primary);
+}
+.icon svg {
+  width: 26px;
+  height: 26px;
+}
+.state h1,
+.state h2 {
+  max-width: 560px;
+  margin-inline: auto;
+  color: var(--ds-ink);
+  font-size: clamp(22px, 3vw, 28px);
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: -0.5px;
+  overflow-wrap: anywhere;
+}
+.description {
+  max-width: 520px;
+  margin: 12px auto 0;
+  color: var(--ds-muted);
+  font-size: 14px;
+  line-height: 1.9;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.state h2 {
+  font-size: 20px;
+  letter-spacing: -0.3px;
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: var(--ds-space-6);
+}
+.shell {
+  display: flex;
+  min-height: 100dvh;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  background: var(--ds-canvas);
+  color: var(--ds-ink);
+}
+.fullContent {
+  width: 100%;
+  max-width: 680px;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: var(--ds-space-6);
+  color: var(--ds-ink);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.7px;
+}
+.brand svg {
+  width: 34px;
+  height: 34px;
+  color: var(--ds-primary);
+}
+.fullContent .state {
+  margin: 0;
+}
+.code {
+  margin-bottom: 12px;
+  color: var(--ds-primary);
+  font-size: 14px;
+  font-weight: 500;
+}
+@media (max-width: 639px) {
+  .workspace {
+    gap: var(--ds-space-6);
+  }
+  .state,
+  .workspace .state {
+    padding: 40px 20px;
+  }
+  .shell {
+    padding: 24px 16px;
+  }
+}

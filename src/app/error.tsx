@@ -1,4 +1,8 @@
-'use client';
+﻿"use client";
+
+import PageState from "@/src/components/common/page-state";
+import { WarningIcon } from "@/src/components/common/icons";
+import { SharedButton } from "@/src/components/share";
 
 type GlobalErrorProps = {
   error: Error & { digest?: string };
@@ -7,12 +11,14 @@ type GlobalErrorProps = {
 
 export default function GlobalError({ error, reset }: GlobalErrorProps) {
   return (
-    <div>
-      <h1>Đã xảy ra lỗi</h1>
-      <p>{error.message}</p>
-      <button type='button' onClick={reset}>
-        Thử lại
-      </button>
+    <div role="alert">
+      <PageState
+        fullPage
+        title="Đã xảy ra lỗi"
+        description={error.message}
+        icon={<WarningIcon />}
+        actions={<SharedButton onClick={reset}>Thử lại</SharedButton>}
+      />
     </div>
   );
 }
