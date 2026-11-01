@@ -1,9 +1,9 @@
-import type { ButtonHTMLAttributes } from 'react';
+import type { ComponentPropsWithRef } from 'react';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'inverted' | 'outlined' | 'danger';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
-export type SharedButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+export type SharedButtonProps = ComponentPropsWithRef<'button'> & {
   variant?: ButtonVariant;
   size?: ButtonSize;
 };

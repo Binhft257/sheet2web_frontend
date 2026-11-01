@@ -6,6 +6,7 @@ type PageProps = {
     step?: string;
     viewId?: string;
     returnTo?: string;
+    completed?: string;
   }>;
 };
 
@@ -29,6 +30,7 @@ export default async function Page({ searchParams }: PageProps) {
       initialStep={normalizeStep(params?.step)}
       initialViewId={params?.viewId ?? null}
       returnTo={getViewReturnPath(params?.returnTo)}
+      initialCompleted={params?.completed === "1"}
     />
   );
 }

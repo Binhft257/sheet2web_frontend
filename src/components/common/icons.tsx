@@ -131,3 +131,22 @@ export function WorkspaceSwitchIcon(props: IconProps) {
     </IconFrame>
   );
 }
+
+export function GlobeIcon(props: IconProps) {
+  return (
+    <IconFrame {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <ellipse cx="12" cy="12" rx="4" ry="9" />
+      <path d="M3 12h18" />
+    </IconFrame>
+  );
+}
+
+export function LockIcon(props: IconProps) {
+  return (
+    <IconFrame {...props}>
+      <rect x="5" y="10" width="14" height="11" rx="2" />
+      <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+    </IconFrame>
+  );
+}

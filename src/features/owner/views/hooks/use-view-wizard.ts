@@ -5,9 +5,11 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ChangeEvent,
 } from "react";
+import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   useCreateDataSource,
@@ -35,6 +37,7 @@ import type {
   SourceSummary,
   ViewDraftFormValues,
   ViewDraftFormErrors,
+  ViewPublication,
 } from "@/src/features/owner/views/wizard-types";
 import type { ViewToast } from "@/src/features/owner/views/types";
 import {
@@ -53,14 +56,23 @@ import {
   buildCreateViewBody,
   buildUpdateViewBody,
 } from "@/src/features/owner/views/wizard-utils";
-import { appPath } from "@/src/lib/app-path";
+import { appPath, replaceAppPath } from "@/src/lib/app-path";
+import { viewDetailPath } from "@/src/features/owner/views/view-navigation";
 import usePreviewRefresh from "@/src/features/owner/views/hooks/use-preview-refresh";
 
 export default function useViewWizard({
   initialStep = 1,
   initialViewId = null,
+  initialCompleted = false,
+  returnTo,
 }: CreateViewWizardProps) {
+  const router = useRouter();
   const queryClient = useQueryClient();
+  const publishLock = useRef(false);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [completedPublication, setCompletedPublication] =
+    useState<ViewPublication | null>(null);
+  const [isEditingExistingView] = useState(Boolean(initialViewId));
   const [currentStep, setCurrentStep] = useState<WizardStep>(initialStep);
   const [viewId, setViewId] = useState<string | null>(initialViewId);
   const [selectedDataSourceId, setSelectedDataSourceId] = useState("");
@@ -118,6 +130,17 @@ export default function useViewWizard({
   const isEditingPublishedView =
     viewQuery.data?.status === "published" ||
     Boolean(publishedSlug || publishedUrl);
+  const publication: ViewPublication | null =
+    completedPublication ??
+    (initialCompleted && viewQuery.data?.status === "published"
+      ? {
+          viewId: viewQuery.data.id,
+          slug: viewQuery.data.slug,
+          name: viewQuery.data.name,
+          url: appPath(`/v/${viewQuery.data.slug}`),
+          accessMode: viewQuery.data.accessMode,
+        }
+      : null);
 
   useEffect(() => {
     const view = viewQuery.data;
@@ -312,7 +335,7 @@ export default function useViewWizard({
   }
 
   async function saveDraft(goNext: boolean) {
-    if (isEditingPublishedView) return null;
+    if (isEditingPublishedView || publishLock.current) return null;
 
     if (!selectedDataSourceId) {
       showToast("error", "Vui lòng chọn nguồn dữ liệu.");
@@ -362,7 +385,12 @@ export default function useViewWizard({
   }
 
   async function handlePublish() {
+    if (publishLock.current || isDraftSaving || publication) return;
+
+    publishLock.current = true;
+    setIsPublishing(true);
     let activeViewId = viewId;
+    let didComplete = false;
 
     try {
       if (!activeViewId) {
@@ -400,10 +428,26 @@ export default function useViewWizard({
       const publishResult = await publishViewMutation.mutateAsync(activeViewId);
       setPublishedUrl(appPath(publishResult.url));
       setPublishedSlug(publishResult.slug);
-      showToast("success", "Xuất bản view thành công.");
       await queryClient.invalidateQueries({ queryKey: ["views"] });
+      if (isEditingExistingView) {
+        replaceAppPath(router, viewDetailPath(activeViewId, returnTo, true));
+      } else {
+        setCompletedPublication({
+          viewId: activeViewId,
+          slug: publishResult.slug,
+          name: formValues.name.trim(),
+          url: appPath(publishResult.url),
+          accessMode,
+        });
+        setToastMessage(null);
+        replaceWizardUrl(activeViewId, 3, true);
+      }
+      didComplete = true;
     } catch (error) {
       showToast("error", getErrorMessage(error, "Không thể xuất bản view."));
+    } finally {
+      if (!didComplete) publishLock.current = false;
+      if (!didComplete || !isEditingExistingView) setIsPublishing(false);
     }
   }
 
@@ -421,9 +465,9 @@ export default function useViewWizard({
 
     try {
       await navigator.clipboard.writeText(absoluteUrl);
-      showToast("success", "Đã copy link view.");
+      showToast("success", "Đã sao chép link truy cập.");
     } catch {
-      showToast("error", "Không thể copy link.");
+      showToast("error", "Không thể sao chép link. Vui lòng thử lại.");
     }
   }
 
@@ -490,14 +534,20 @@ export default function useViewWizard({
       ),
     isDraftSaving,
     isEditingPublishedView,
-    isPublishPending: publishViewMutation.isPending,
+    isEditingExistingView,
+    publication,
+    isPublishPending: isPublishing,
     isPublishDisabled:
+      isPublishing ||
+      Boolean(publication) ||
+      createViewMutation.isPending ||
       publishViewMutation.isPending ||
       updateViewMutation.isPending ||
       updatePublishedViewMutation.isPending,
     hasPublishedLink: Boolean(publishedUrl || publishedSlug),
     viewUrlLabel,
     toastMessage,
+    showToast,
     dismissToast: () => setToastMessage(null),
     addModalOpen,
     openAddModal: () => setAddModalOpen(true),

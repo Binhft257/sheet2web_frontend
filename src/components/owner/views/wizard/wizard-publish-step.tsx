@@ -27,7 +27,7 @@ export default function WizardPublishStep({
             </div>
           </div>
           <div className="ui-wizard-panel-body space-y-6">
-            <fieldset>
+            <fieldset disabled={wizard.isPublishPending}>
               <legend className="ui-field-label">Quyền truy cập</legend>
               <div className="space-y-3">
                 {[
@@ -102,11 +102,16 @@ export default function WizardPublishStep({
         </section>
       </div>
       <div className="ui-wizard-footer">
-        <SharedButton variant="outlined" onClick={() => wizard.goToStep(2)}>
+        <SharedButton
+          variant="outlined"
+          disabled={wizard.isPublishPending}
+          onClick={() => wizard.goToStep(2)}
+        >
           Quay lại
         </SharedButton>
         <SharedButton
           disabled={wizard.isPublishDisabled}
+          aria-busy={wizard.isPublishPending}
           onClick={wizard.handlePublish}
         >
           {wizard.isPublishPending

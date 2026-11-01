@@ -6,11 +6,20 @@ type StatusBadgeProps = {
   children: ReactNode;
   tone?: StatusTone;
   showDot?: boolean;
+  className?: string;
 };
 
-export default function StatusBadge({ children, tone = "neutral", showDot = true }: StatusBadgeProps) {
+export default function StatusBadge({
+  children,
+  tone = "neutral",
+  showDot = true,
+  className,
+}: StatusBadgeProps) {
   return (
-    <span className="ui-badge" data-tone={tone}>
+    <span
+      className={className ? `ui-badge ${className}` : "ui-badge"}
+      data-tone={tone}
+    >
       {showDot ? <span className="ui-status-dot" aria-hidden="true" /> : null}
       {children}
     </span>

@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useId, useRef, type ReactNode } from "react";
+import {
+  useEffect,
+  useId,
+  useRef,
+  type ReactNode,
+  type RefObject,
+} from "react";
 import { CloseIcon } from "@/src/components/common/icons";
 
 type ModalProps = {
@@ -9,9 +15,28 @@ type ModalProps = {
   description?: string;
   busy?: boolean;
   size?: "sm" | "md" | "lg";
+  role?: "dialog" | "alertdialog";
+  ariaDescribedBy?: string;
+  initialFocusRef?: RefObject<HTMLElement | null>;
   onClose: () => void;
   children: ReactNode;
 };
+
+let openModalCount = 0;
+let originalBodyOverflow = "";
+
+function lockPageScroll() {
+  if (openModalCount === 0) {
+    originalBodyOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+  }
+  openModalCount += 1;
+  return () => {
+    openModalCount -= 1;
+    if (openModalCount === 0)
+      document.body.style.overflow = originalBodyOverflow;
+  };
+}
 
 export default function Modal({
   open,
@@ -19,6 +44,9 @@ export default function Modal({
   description,
   busy = false,
   size = "md",
+  role = "dialog",
+  ariaDescribedBy,
+  initialFocusRef,
   onClose,
   children,
 }: ModalProps) {
@@ -35,27 +63,32 @@ export default function Modal({
     if (!open || !dialog) return;
 
     const previousFocus = document.activeElement as HTMLElement | null;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const unlockScroll = lockPageScroll();
     dialog.showModal();
-    dialog.querySelector<HTMLInputElement>("input:not([disabled])")?.focus();
+    const initialFocus =
+      initialFocusRef?.current ??
+      dialog.querySelector<HTMLInputElement>("input:not([disabled])");
+    initialFocus?.focus();
 
     return () => {
       dialog.close();
-      document.body.style.overflow = previousOverflow;
+      unlockScroll();
       if (previousFocus?.isConnected)
         previousFocus.focus({ preventScroll: true });
     };
-  }, [open]);
+  }, [open, initialFocusRef]);
 
   return (
     <dialog
       ref={dialogRef}
       className="ui-modal"
+      role={role}
       closedby={busy ? "none" : "closerequest"}
       data-size={size}
       aria-labelledby={titleId}
-      aria-describedby={description ? descriptionId : undefined}
+      aria-describedby={
+        ariaDescribedBy ?? (description ? descriptionId : undefined)
+      }
       aria-busy={busy}
       tabIndex={-1}
       onCancel={(event) => {

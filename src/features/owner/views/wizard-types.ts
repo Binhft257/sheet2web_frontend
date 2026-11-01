@@ -1,5 +1,9 @@
 import type { DataSource } from "@/src/types/data-source";
-import type { ThemePreset, ViewSelectionType } from "@/src/types/view";
+import type {
+  ThemePreset,
+  ViewAccessMode,
+  ViewSelectionType,
+} from "@/src/types/view";
 
 export type WizardStep = 1 | 2 | 3;
 
@@ -7,6 +11,15 @@ export type CreateViewWizardProps = {
   initialStep?: WizardStep;
   initialViewId?: string | null;
   returnTo?: string | null;
+  initialCompleted?: boolean;
+};
+
+export type ViewPublication = {
+  viewId: string;
+  slug: string;
+  name: string;
+  url: string;
+  accessMode: ViewAccessMode;
 };
 
 export type SourceSummary = Pick<

@@ -4,6 +4,7 @@ import AppLink from "@/src/components/app-link";
 import PageHeader from "@/src/components/common/page-header";
 import Pagination from "@/src/components/common/pagination";
 import Toast from "@/src/components/common/toast";
+import ConfirmDialog from "@/src/components/common/confirm-dialog";
 import { PlusIcon } from "@/src/components/common/icons";
 import ViewsToolbar from "@/src/components/owner/views/views-toolbar";
 import ViewsTable from "@/src/components/owner/views/views-table";
@@ -76,6 +77,9 @@ export default function ViewList() {
         publishPending={workspace.publishPending}
         deletingId={workspace.deletingId}
       />
+      {workspace.confirmationProps ? (
+        <ConfirmDialog {...workspace.confirmationProps} />
+      ) : null}
     </section>
   );
 }

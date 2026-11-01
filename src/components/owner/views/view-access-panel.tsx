@@ -2,12 +2,15 @@
 import ViewPermissionsPanel from "./view-permissions-panel";
 import ViewShareTokensPanel from "./view-share-tokens-panel";
 import useViewSharing from "@/src/features/owner/views/hooks/use-view-sharing";
-import type { ViewToast } from "@/src/features/owner/views/types";
-import type { OwnerView } from "@/src/types/view";
+import type {
+  ViewSharingTarget,
+  ViewToast,
+} from "@/src/features/owner/views/types";
 import styles from "./views.module.css";
+import ConfirmDialog from "@/src/components/common/confirm-dialog";
 
 type ViewAccessPanelProps = {
-  view: OwnerView;
+  view: ViewSharingTarget;
   onToast: (toast: ViewToast) => void;
 };
 const tabs = [
@@ -76,6 +79,9 @@ export default function ViewAccessPanel({
           <ViewShareTokensPanel sharing={sharing} />
         )}
       </div>
+      {sharing.confirmationProps ? (
+        <ConfirmDialog {...sharing.confirmationProps} />
+      ) : null}
     </div>
   );
 }

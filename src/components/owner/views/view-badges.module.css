@@ -1,0 +1,19 @@
+.badge {
+  box-sizing: border-box;
+  height: 28px;
+  flex-shrink: 0;
+  gap: 6px;
+  padding: 0 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 1;
+  white-space: nowrap;
+}
+.badge[data-tone="neutral"] {
+  border-color: var(--ds-line);
+}
+.badge > svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}

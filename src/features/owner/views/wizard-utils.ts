@@ -13,7 +13,11 @@ import type {
   OwnerViewDetail,
 } from "@/src/types/view";
 
-export function replaceWizardUrl(viewId: string | null, step: WizardStep) {
+export function replaceWizardUrl(
+  viewId: string | null,
+  step: WizardStep,
+  completed = false,
+) {
   if (typeof window === "undefined") {
     return;
   }
@@ -27,6 +31,7 @@ export function replaceWizardUrl(viewId: string | null, step: WizardStep) {
     params.set("viewId", viewId);
   }
   params.set("step", String(step));
+  if (completed) params.set("completed", "1");
 
   window.history.replaceState(
     null,

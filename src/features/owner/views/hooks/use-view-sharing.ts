@@ -11,22 +11,28 @@ import {
   revokeShareToken,
 } from "@/src/services/view.service";
 import { appPath } from "@/src/lib/app-path";
-import type { OwnerView, ViewShareToken } from "@/src/types/view";
-import type { ViewToast } from "@/src/features/owner/views/types";
+import useConfirmDialog from "@/src/hooks/use-confirm-dialog";
+import type { ViewShareToken } from "@/src/types/view";
+import type {
+  ViewSharingTarget,
+  ViewToast,
+} from "@/src/features/owner/views/types";
 import {
   getAbsoluteUrl,
   getErrorMessage,
   isPublishedView,
+  getPermissionUserEmail,
   toDateTimeLocalInputValue,
 } from "@/src/features/owner/views/view-utils";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function useViewSharing(
-  view: OwnerView | null,
+  view: ViewSharingTarget | null,
   onToast: (toast: ViewToast) => void,
 ) {
   const queryClient = useQueryClient();
+  const confirmation = useConfirmDialog();
   const [email, setEmail] = useState("");
   const [tokenName, setTokenName] = useState("");
   const [tokenExpiresAt, setTokenExpiresAt] = useState("");
@@ -77,11 +83,6 @@ export default function useViewSharing(
         queryKey: ["views", "permissions", view?.id],
       });
     },
-    onError: (error) =>
-      onToast({
-        type: "error",
-        message: getErrorMessage(error, "Không thể gỡ quyền xem view."),
-      }),
   });
   const createTokenMutation = useMutation({
     mutationFn: (expiresAt: string | null) =>
@@ -112,11 +113,6 @@ export default function useViewSharing(
         queryKey: ["views", "share-tokens", view?.id],
       });
     },
-    onError: (error) =>
-      onToast({
-        type: "error",
-        message: getErrorMessage(error, "Không thể thu hồi link chia sẻ."),
-      }),
   });
 
   async function handleAddPermission(event: FormEvent<HTMLFormElement>) {
@@ -164,11 +160,20 @@ export default function useViewSharing(
   }
 
   function handleRemovePermission(permissionId: string) {
-    if (!window.confirm("Gỡ quyền xem của user này?")) {
-      return;
-    }
-
-    removePermissionMutation.mutate(permissionId);
+    const permission = permissionsQuery.data?.find(
+      (item) => item.id === permissionId,
+    );
+    const viewer = permission
+      ? getPermissionUserEmail(permission)
+      : "người xem này";
+    confirmation.requestConfirmation({
+      title: "Gỡ quyền truy cập",
+      message: `Bạn muốn gỡ quyền xem của ${viewer}? Người này sẽ không còn quyền truy cập được cấp trực tiếp. Các link truy cập riêng còn hiệu lực không bị thu hồi bởi thao tác này.`,
+      confirmLabel: "Gỡ quyền",
+      pendingLabel: "Đang gỡ quyền...",
+      errorMessage: "Không thể gỡ quyền xem. Vui lòng thử lại.",
+      onConfirm: () => removePermissionMutation.mutateAsync(permissionId),
+    });
   }
 
   async function handleCreateToken(event: FormEvent<HTMLFormElement>) {
@@ -203,14 +208,19 @@ export default function useViewSharing(
   }
 
   function handleRevokeToken(tokenId: string) {
-    if (!window.confirm("Thu hồi link chia sẻ này?")) {
-      return;
-    }
-
-    revokeTokenMutation.mutate(tokenId);
+    const token = shareTokensQuery.data?.find((item) => item.id === tokenId);
+    confirmation.requestConfirmation({
+      title: "Thu hồi link chia sẻ",
+      message: `Bạn muốn thu hồi link “${token?.name || "Link chia sẻ"}”? Link này sẽ không còn cấp quyền truy cập. Những người được cấp quyền trực tiếp vẫn có thể xem trang.`,
+      confirmLabel: "Thu hồi link",
+      pendingLabel: "Đang thu hồi...",
+      errorMessage: "Không thể thu hồi link chia sẻ. Vui lòng thử lại.",
+      onConfirm: () => revokeTokenMutation.mutateAsync(tokenId),
+    });
   }
 
   return {
+    confirmationProps: confirmation.dialogProps,
     email,
     setEmail,
     tokenName,

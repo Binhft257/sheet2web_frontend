@@ -26,6 +26,13 @@ export default function useViewListNavigation() {
   const params = useSearchParams();
   const query = params.toString();
   const location = readViewListLocation(params);
+  const publicationNotice = params.get("notice") === "published";
+
+  const clearPublicationNotice = useCallback(() => {
+    const next = new URLSearchParams(window.location.search);
+    next.delete("notice");
+    window.history.replaceState(null, "", appPath(viewListPath(next)));
+  }, []);
 
   function update(
     changes: Record<string, string | null>,
@@ -45,6 +52,7 @@ export default function useViewListNavigation() {
 
   function openEditor(id: string) {
     const next = new URLSearchParams(window.location.search);
+    next.delete("notice");
     next.set("detail", id);
     const returnTo = viewListPath(next);
     rememberScroll(returnTo);
@@ -77,6 +85,8 @@ export default function useViewListNavigation() {
 
   return {
     ...location,
+    publicationNotice,
+    clearPublicationNotice,
     changeSearch: (search: string) => update({ search, page: null }),
     changeStatus: (status: string) => update({ status, page: null }),
     changeAccess: (accessMode: string) => update({ accessMode, page: null }),

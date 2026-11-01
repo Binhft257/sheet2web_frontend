@@ -15,12 +15,14 @@ import {
 } from "@/src/features/owner/views/view-utils";
 import type { ViewToast } from "@/src/features/owner/views/types";
 import useViewListNavigation from "./use-view-list-navigation";
+import useConfirmDialog from "@/src/hooks/use-confirm-dialog";
 
 const VIEWS_LIMIT = 10;
 
 export default function useViewsPage() {
   const queryClient = useQueryClient();
   const navigation = useViewListNavigation();
+  const confirmation = useConfirmDialog();
   const {
     page,
     search,
@@ -28,6 +30,8 @@ export default function useViewsPage() {
     accessModeFilter,
     detailViewId,
     restoreScroll,
+    publicationNotice,
+    clearPublicationNotice,
   } = navigation;
   const [toastMessage, setToastMessage] = useState<ViewToast | null>(null);
 
@@ -40,6 +44,17 @@ export default function useViewsPage() {
   });
   const publishViewMutation = usePublishView();
   const deleteViewMutation = useDeleteView();
+
+  useEffect(() => {
+    if (!publicationNotice) return;
+    // Consume feedback from the editor once, including after a full-page navigation.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setToastMessage({
+      type: "success",
+      message: "Đã lưu và xuất bản thay đổi thành công.",
+    });
+    clearPublicationNotice();
+  }, [publicationNotice, clearPublicationNotice]);
 
   useEffect(() => {
     if (!viewsQuery.isPending) return restoreScroll();
@@ -99,25 +114,23 @@ export default function useViewsPage() {
     }
   }
 
-  async function handleDelete(view: OwnerView) {
-    if (!window.confirm(`Bạn có chắc muốn xóa view "${view.name}"?`)) {
-      return;
-    }
-
-    try {
-      await deleteViewMutation.mutateAsync(view.id);
-      navigation.closeDetail();
-      showToast({
-        type: "success",
-        message: "Đã xóa view thành công.",
-      });
-      await queryClient.invalidateQueries({ queryKey: ["views", "my"] });
-    } catch (error) {
-      showToast({
-        type: "error",
-        message: getErrorMessage(error, "Không thể xóa view."),
-      });
-    }
+  function handleDelete(view: OwnerView) {
+    confirmation.requestConfirmation({
+      title: "Xóa trang dữ liệu",
+      message: `Bạn muốn xóa trang “${view.name}”? Trang sẽ bị xóa khỏi danh sách và người xem không thể truy cập qua link đã chia sẻ.`,
+      confirmLabel: "Xóa trang",
+      pendingLabel: "Đang xóa...",
+      errorMessage: "Không thể xóa trang dữ liệu. Vui lòng thử lại.",
+      onConfirm: async () => {
+        await deleteViewMutation.mutateAsync(view.id);
+        navigation.closeDetail();
+        showToast({
+          type: "success",
+          message: "Đã xóa trang dữ liệu thành công.",
+        });
+        await queryClient.invalidateQueries({ queryKey: ["views", "my"] });
+      },
+    });
   }
 
   async function handleCopyLink(url: string) {
@@ -133,6 +146,7 @@ export default function useViewsPage() {
   }
 
   return {
+    confirmationProps: confirmation.dialogProps,
     page,
     search,
     statusFilter,

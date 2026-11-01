@@ -10,6 +10,7 @@ import ViewStepper from "@/src/components/owner/views/view-stepper";
 import WizardSourceStep from "@/src/components/owner/views/wizard/wizard-source-step";
 import WizardConfigStep from "@/src/components/owner/views/wizard/wizard-config-step";
 import WizardPublishStep from "@/src/components/owner/views/wizard/wizard-publish-step";
+import WizardCompleteStep from "@/src/components/owner/views/wizard/wizard-complete-step";
 import useViewWizard from "@/src/features/owner/views/hooks/use-view-wizard";
 import type { CreateViewWizardProps } from "@/src/features/owner/views/wizard-types";
 import { replaceAppPath } from "@/src/lib/app-path";
@@ -21,6 +22,7 @@ import {
 export default function CreateViewWizard(props: CreateViewWizardProps) {
   const router = useRouter();
   const wizard = useViewWizard(props);
+  const publication = wizard.publication;
   const returnTo = getViewReturnPath(props.returnTo);
   return (
     <section className="ui-view-wizard mx-auto flex w-full max-w-[1240px] flex-col gap-8">
@@ -30,29 +32,58 @@ export default function CreateViewWizard(props: CreateViewWizardProps) {
         onDismiss={wizard.dismissToast}
       />
       <PageHeader
-        title={wizard.viewId ? "Chỉnh sửa view" : "Tạo view mới"}
-        description="Chọn nguồn, cấu hình dữ liệu và xuất bản view của bạn."
+        title={
+          publication
+            ? "Trang dữ liệu đã sẵn sàng"
+            : wizard.isEditingExistingView
+              ? "Chỉnh sửa view"
+              : "Tạo view mới"
+        }
+        description={
+          publication
+            ? "Mở trang hoặc sao chép link để bắt đầu chia sẻ dữ liệu."
+            : "Chọn nguồn, cấu hình dữ liệu và xuất bản view của bạn."
+        }
         actions={
-          <SharedButton
-            variant="outlined"
-            onClick={() => replaceAppPath(router, returnTo ?? VIEWS_PATH)}
-          >
-            {returnTo ? "Quay lại chi tiết" : "Hủy bỏ"}
-          </SharedButton>
+          !publication ? (
+            <SharedButton
+              variant="outlined"
+              disabled={wizard.isPublishPending}
+              onClick={() => replaceAppPath(router, returnTo ?? VIEWS_PATH)}
+            >
+              {returnTo ? "Quay lại chi tiết" : "Hủy bỏ"}
+            </SharedButton>
+          ) : undefined
         }
       />
-      <ViewStepper currentStep={wizard.currentStep} />
-      <QueryFeedback
-        isLoading={wizard.isHydrating}
-        errorMessage={wizard.hydrationError}
-        onRetry={wizard.retryView}
-      >
-        {wizard.currentStep === 1 ? <WizardSourceStep wizard={wizard} /> : null}
-        {wizard.currentStep === 2 ? <WizardConfigStep wizard={wizard} /> : null}
-        {wizard.currentStep === 3 ? (
-          <WizardPublishStep wizard={wizard} />
-        ) : null}
-      </QueryFeedback>
+      <ViewStepper
+        currentStep={wizard.currentStep}
+        completed={Boolean(publication)}
+      />
+      {publication ? (
+        <WizardCompleteStep
+          publication={publication}
+          onCopy={wizard.handleCopyLink}
+          onBackToList={() => replaceAppPath(router, VIEWS_PATH)}
+          onToast={(toast) => wizard.showToast(toast.type, toast.message)}
+        />
+      ) : (
+        <QueryFeedback
+          isLoading={wizard.isHydrating}
+          errorMessage={wizard.hydrationError}
+          onRetry={wizard.retryView}
+        >
+          {wizard.currentStep === 1 ? (
+            <WizardSourceStep wizard={wizard} />
+          ) : null}
+          {wizard.currentStep === 2 ? (
+            <WizardConfigStep wizard={wizard} />
+          ) : null}
+          {wizard.currentStep === 3 ? (
+            <WizardPublishStep wizard={wizard} />
+          ) : null}
+        </QueryFeedback>
+      )}
       <AddDataSourceModal
         isSubmitting={wizard.isCreatingSource}
         onClose={wizard.closeAddModal}

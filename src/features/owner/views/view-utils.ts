@@ -40,7 +40,7 @@ export function toDateTimeLocalInputValue(date: Date) {
   return new Date(localTime).toISOString().slice(0, 16);
 }
 
-export function isPublishedView(view: OwnerView) {
+export function isPublishedView(view: Pick<OwnerView, "status">) {
   return view.status.toLowerCase() === "published";
 }
 

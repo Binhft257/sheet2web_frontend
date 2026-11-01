@@ -34,6 +34,21 @@ export function viewListPath(params: URLSearchParams) {
   return `${VIEWS_PATH}${query ? `?${query}` : ""}`;
 }
 
+export function viewDetailPath(
+  viewId: string,
+  returnTo?: string | null,
+  published = false,
+) {
+  const target = new URL(
+    getViewReturnPath(returnTo) ?? VIEWS_PATH,
+    "https://sheet2web.invalid",
+  );
+  target.searchParams.set("detail", viewId);
+  if (published) target.searchParams.set("notice", "published");
+  else target.searchParams.delete("notice");
+  return viewListPath(target.searchParams);
+}
+
 /** Only return to the view list; never navigate to a URL supplied by another origin. */
 export function getViewReturnPath(value: unknown) {
   if (
