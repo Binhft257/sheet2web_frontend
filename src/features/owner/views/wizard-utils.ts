@@ -1,5 +1,6 @@
 import { appPath } from "@/src/lib/app-path";
 import { getViewReturnPath } from "./view-navigation";
+import { isWizardProgressId } from "./wizard-progress";
 import type {
   WizardStep,
   SourceSummary,
@@ -23,9 +24,11 @@ export function replaceWizardUrl(
   }
 
   const params = new URLSearchParams();
-  const returnTo = getViewReturnPath(
-    new URLSearchParams(window.location.search).get("returnTo"),
-  );
+  const current = new URLSearchParams(window.location.search);
+  const returnTo = getViewReturnPath(current.get("returnTo"));
+  const progressId = current.get("progressId");
+  if (!completed && isWizardProgressId(progressId))
+    params.set("progressId", progressId);
   if (returnTo) params.set("returnTo", returnTo);
   if (viewId) {
     params.set("viewId", viewId);

@@ -3,6 +3,7 @@ import { SheetIcon } from "@/src/components/common/icons";
 import { SharedButton } from "@/src/components/share";
 import StatusBadge from "@/src/components/owner/data-sources/status-badge";
 import type { DataSource } from "@/src/types/data-source";
+import { getDataSourceUrl } from "@/src/features/owner/data-sources/data-source-utils";
 
 type DataSourcesTableProps = {
   dataSources: DataSource[];
@@ -11,8 +12,10 @@ type DataSourcesTableProps = {
   onRetry: () => void;
   onEdit: (dataSource: DataSource) => void;
   onDelete: (dataSource: DataSource) => void;
+  onSync: (dataSource: DataSource) => void;
   updatingId?: string | null;
   deletingId?: string | null;
+  syncingId?: string | null;
 };
 
 function getSourceTypeLabel(sourceType: string) {
@@ -55,8 +58,10 @@ export default function DataSourcesTable({
   onRetry,
   onEdit,
   onDelete,
+  onSync,
   updatingId = null,
   deletingId = null,
+  syncingId = null,
 }: DataSourcesTableProps) {
   if (!isLoading && errorMessage) {
     return (
@@ -147,11 +152,35 @@ export default function DataSourcesTable({
                     )}
                   </td>
                   <td>
-                    <div className="flex items-center gap-2">
+                    <div className="grid grid-cols-2 gap-2">
+                      <SharedButton
+                        className="col-span-2"
+                        variant="outlined"
+                        size="sm"
+                        aria-label={`Đồng bộ danh sách sheet của ${item.title}`}
+                        aria-busy={syncingId === item.id}
+                        disabled={
+                          Boolean(syncingId || updatingId || deletingId) ||
+                          !getDataSourceUrl(item)
+                        }
+                        title={
+                          getDataSourceUrl(item)
+                            ? "Lấy lại danh sách tab từ Google Sheets"
+                            : "Chọn Sửa để bổ sung link Google Sheets"
+                        }
+                        onClick={() => onSync(item)}
+                      >
+                        {syncingId === item.id
+                          ? "Đang đồng bộ..."
+                          : "Đồng bộ sheet"}
+                      </SharedButton>
                       <SharedButton
                         variant="outlined"
                         size="sm"
-                        disabled={Boolean(deletingId) || updatingId === item.id}
+                        disabled={
+                          Boolean(syncingId || deletingId) ||
+                          updatingId === item.id
+                        }
                         onClick={() => onEdit(item)}
                       >
                         {updatingId === item.id ? "Đang sửa..." : "Sửa"}
@@ -159,7 +188,10 @@ export default function DataSourcesTable({
                       <SharedButton
                         variant="danger"
                         size="sm"
-                        disabled={Boolean(updatingId) || deletingId === item.id}
+                        disabled={
+                          Boolean(syncingId || updatingId) ||
+                          deletingId === item.id
+                        }
                         onClick={() => onDelete(item)}
                       >
                         {deletingId === item.id ? "Đang xóa..." : "Xóa"}

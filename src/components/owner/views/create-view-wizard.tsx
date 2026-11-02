@@ -49,7 +49,10 @@ export default function CreateViewWizard(props: CreateViewWizardProps) {
             <SharedButton
               variant="outlined"
               disabled={wizard.isPublishPending}
-              onClick={() => replaceAppPath(router, returnTo ?? VIEWS_PATH)}
+              onClick={() => {
+                wizard.clearProgress();
+                replaceAppPath(router, returnTo ?? VIEWS_PATH);
+              }}
             >
               {returnTo ? "Quay lại chi tiết" : "Hủy bỏ"}
             </SharedButton>

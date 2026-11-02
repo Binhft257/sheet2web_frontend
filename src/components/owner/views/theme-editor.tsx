@@ -16,7 +16,7 @@ const presets: Array<{
   {
     value: "modern",
     label: "Modern",
-    description: "Nền sáng, header xanh nhạt.",
+    description: "Nền sáng, tiêu đề xanh nhạt.",
     previewClassName: "border-blue-100 bg-blue-50/60",
     headerClassName: "bg-blue-700",
     rowClassName: "bg-white",
@@ -42,7 +42,7 @@ const presets: Array<{
 export default function ThemeEditor({ value, onChange }: ThemeEditorProps) {
   return (
     <fieldset>
-      <legend className="ui-field-label">Theme hiển thị</legend>
+      <legend className="ui-field-label">Giao diện bảng</legend>
       <p className="mb-4 text-xs leading-6 text-muted">
         Chọn kiểu hiển thị phù hợp với bảng dữ liệu.
       </p>

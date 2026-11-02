@@ -10,6 +10,7 @@ import { useRef, useState } from "react";
 import Modal from "@/src/components/common/modal";
 import { SharedButton } from "@/src/components/share";
 import { z } from "zod";
+import { getDataSourceUrl } from "@/src/features/owner/data-sources/data-source-utils";
 
 type UpsertDataSourceModalMode = "create" | "edit";
 
@@ -60,20 +61,6 @@ function isValidHttpUrl(value: string) {
   }
 }
 
-function getInitialSourceUrl(dataSource?: DataSource | null) {
-  const sourceUrl = dataSource?.sourceUrl?.trim();
-  if (sourceUrl) {
-    return sourceUrl;
-  }
-
-  const spreadsheetId = dataSource?.spreadsheetId?.trim();
-  if (spreadsheetId) {
-    return `https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit`;
-  }
-
-  return "";
-}
-
 export default function UpsertDataSourceModal({
   open,
   mode,
@@ -85,9 +72,7 @@ export default function UpsertDataSourceModal({
   const [values, setValues] = useState<FormValues>({
     title: mode === "edit" ? (dataSource?.title ?? "") : initialValues.title,
     sourceUrl:
-      mode === "edit"
-        ? getInitialSourceUrl(dataSource)
-        : initialValues.sourceUrl,
+      mode === "edit" ? getDataSourceUrl(dataSource) : initialValues.sourceUrl,
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);

@@ -7,6 +7,7 @@ import type { ThemePreset } from "@/src/types/view";
 type PreviewTableProps = {
   preview: DataSourcePreview | null;
   isLoading?: boolean;
+  isReloadDisabled?: boolean;
   errorMessage?: string | null;
   themePreset?: ThemePreset;
   reloadMode: ReloadMode;
@@ -39,12 +40,11 @@ function formatDateTime(dateTime: string | null | undefined) {
 function LoadingTable() {
   return (
     <div
-      className="space-y-3 p-6"
+      className="space-y-3"
       role="status"
       aria-label="Đang tải bản xem trước"
       aria-busy="true"
     >
-      <div className="ui-skeleton h-8 w-48" />
       <div className="overflow-hidden rounded-lg border border-line">
         {Array.from({ length: 6 }).map((_, index) => (
           <div
@@ -67,6 +67,7 @@ function LoadingTable() {
 export default function PreviewTable({
   preview,
   isLoading = false,
+  isReloadDisabled = false,
   errorMessage = null,
   themePreset = "modern",
   reloadMode,
@@ -76,28 +77,19 @@ export default function PreviewTable({
   remainingSeconds,
   onReload,
 }: PreviewTableProps) {
-  if (isLoading) {
-    return <LoadingTable />;
-  }
-
-  if (errorMessage) {
-    return (
-      <div className="ui-alert m-6" role="alert">
-        <p className="text-sm font-medium">Không thể preview dữ liệu</p>
-        <p className="mt-1 text-sm">{errorMessage}</p>
-      </div>
-    );
-  }
-
   return (
     <SharedViewRender
       allowThemeSwitch={false}
       headingLevel="h2"
-      emptyDescription="Chọn sheet và bấm Reload để kiểm tra dữ liệu trước khi xuất bản."
-      emptyTitle="Chưa có dữ liệu preview"
+      emptyDescription="Chọn sheet và bấm Xem trước để kiểm tra dữ liệu trước khi xuất bản."
+      emptyTitle="Chưa có dữ liệu xem trước"
       headers={preview?.headers ?? []}
       intervalOptionsSeconds={[10, 30, 60]}
       intervalSeconds={intervalSeconds}
+      isReloading={isLoading}
+      isReloadDisabled={isReloadDisabled}
+      reloadLabel={errorMessage ? "Thử lại" : preview ? "Làm mới" : "Xem trước"}
+      showReloadInAuto
       onIntervalSecondsChange={onIntervalSecondsChange}
       onReload={onReload}
       onReloadModeChange={onReloadModeChange}
@@ -107,8 +99,20 @@ export default function PreviewTable({
       rows={preview?.rows ?? []}
       tableMaxHeightClassName="max-h-[520px]"
       themePreset={themePreset}
-      title={preview?.sheetName || "Bản xem trước trực tiếp"}
+      title={preview?.sheetName || "Bản xem trước"}
       updatedAtLabel={formatDateTime(preview?.previewedAt)}
-    />
+    >
+      {isLoading ? (
+        <LoadingTable />
+      ) : errorMessage ? (
+        <div className="ui-alert" role="alert">
+          <p className="text-sm font-medium">Không thể tải bản xem trước</p>
+          <p className="mt-1 text-sm">{errorMessage}</p>
+          <p className="mt-2 text-sm">
+            Bấm Thử lại ở thanh điều khiển để tải lại dữ liệu.
+          </p>
+        </div>
+      ) : undefined}
+    </SharedViewRender>
   );
 }

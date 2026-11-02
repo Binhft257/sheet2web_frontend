@@ -2,6 +2,7 @@
 
 import PageHeader from "@/src/components/common/page-header";
 import Toast from "@/src/components/common/toast";
+import ConfirmDialog from "@/src/components/common/confirm-dialog";
 import { PlusIcon } from "@/src/components/common/icons";
 import { SharedButton } from "@/src/components/share";
 import DataSourcesTable from "@/src/components/owner/data-sources/data-sources-table";
@@ -22,7 +23,7 @@ export default function DataSourcesPage() {
       />
       <PageHeader
         title="Nguồn dữ liệu"
-        description="Kết nối và quản lý các bảng tính Google Sheets dùng để tạo view."
+        description="Kết nối các bảng tính Google Sheets. Đồng bộ danh sách sheet sau khi thêm hoặc đổi tab."
         actions={
           <SharedButton onClick={workspace.openCreateModal}>
             <PlusIcon />
@@ -45,6 +46,8 @@ export default function DataSourcesPage() {
           onDelete={workspace.openDeleteModal}
           onEdit={workspace.openEditModal}
           onRetry={workspace.retry}
+          onSync={workspace.requestSyncDataSource}
+          syncingId={workspace.syncingId}
           updatingId={workspace.updatingId}
         />
         {!workspace.tableErrorMessage ? (
@@ -78,6 +81,9 @@ export default function DataSourcesPage() {
         onConfirm={workspace.handleDeleteDataSource}
         open={Boolean(workspace.deleteTarget)}
       />
+      {workspace.confirmationProps ? (
+        <ConfirmDialog {...workspace.confirmationProps} />
+      ) : null}
     </section>
   );
 }

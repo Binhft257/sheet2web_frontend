@@ -11,6 +11,7 @@ import { ViewBySlugError } from "@/src/services/view.service";
 import type { ThemePreset, ViewJsonObject } from "@/src/types/view";
 import AppLink from "@/src/components/app-link";
 import { WarningIcon } from "@/src/components/common/icons";
+import { SharedButton } from "@/src/components/share";
 import { useEffect, useMemo, useState } from "react";
 import styles from "./published-view.module.css";
 
@@ -38,6 +39,15 @@ function getErrorStatus(error: unknown) {
   }
 
   return undefined;
+}
+
+function isRecoverableError(status: number | undefined) {
+  return (
+    status === undefined ||
+    status === 408 ||
+    status === 429 ||
+    (status >= 500 && status < 600)
+  );
 }
 
 function formatDateTime(dateTime: string | null | undefined) {
@@ -92,9 +102,17 @@ function LoadingState() {
   );
 }
 
-function ErrorState({ status }: { status?: number }) {
+function ErrorState({
+  status,
+  isRetrying,
+  onRetry,
+}: {
+  status?: number;
+  isRetrying: boolean;
+  onRetry?: () => void;
+}) {
   const title =
-    status === 403
+    status === 401 || status === 403
       ? "Bạn không có quyền xem view này"
       : status === 404
         ? "View không tồn tại hoặc chưa được xuất bản"
@@ -107,10 +125,20 @@ function ErrorState({ status }: { status?: number }) {
           <WarningIcon />
         </span>
         <h1>{title}</h1>
-        {status === 403 ? (
+        {status === 401 || status === 403 ? (
           <AppLink className="ui-button mt-6" href="/sign-in">
             Đăng nhập
           </AppLink>
+        ) : null}
+        {onRetry ? (
+          <SharedButton
+            className="mt-6"
+            disabled={isRetrying}
+            aria-busy={isRetrying}
+            onClick={onRetry}
+          >
+            {isRetrying ? "Đang tải..." : "Thử lại"}
+          </SharedButton>
         ) : null}
       </div>
     </ViewerShell>
@@ -136,6 +164,35 @@ export default function PublishedViewPage({
     DEFAULT_INTERVAL_SECONDS,
   );
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
+  const [blockedSnapshot, setBlockedSnapshot] = useState<{
+    slug: string;
+    shareToken?: string;
+    updatedAt: number;
+  } | null>(null);
+  const errorStatus = getErrorStatus(publishedViewQuery.error);
+  const canRetry = isRecoverableError(errorStatus);
+  const hasCachedData = Boolean(publishedViewQuery.data);
+
+  useEffect(() => {
+    if (publishedViewQuery.isError && hasCachedData && !canRetry) {
+      // A later network error must not reveal data hidden by an access/removal error.
+      setBlockedSnapshot({
+        slug,
+        shareToken,
+        updatedAt: publishedViewQuery.dataUpdatedAt,
+      });
+    } else if (publishedViewQuery.isSuccess) {
+      setBlockedSnapshot(null);
+    }
+  }, [
+    publishedViewQuery.isError,
+    publishedViewQuery.isSuccess,
+    publishedViewQuery.dataUpdatedAt,
+    hasCachedData,
+    canRetry,
+    slug,
+    shareToken,
+  ]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -211,43 +268,85 @@ export default function PublishedViewPage({
     return <LoadingState />;
   }
 
-  if (publishedViewQuery.isError) {
-    return <ErrorState status={getErrorStatus(publishedViewQuery.error)} />;
+  const isSnapshotBlocked =
+    blockedSnapshot?.slug === slug &&
+    blockedSnapshot.shareToken === shareToken &&
+    blockedSnapshot.updatedAt === publishedViewQuery.dataUpdatedAt;
+
+  function retry() {
+    void refetch({ cancelRefetch: false });
+  }
+
+  if (
+    !publishedViewQuery.data ||
+    (publishedViewQuery.isError && (!canRetry || isSnapshotBlocked))
+  ) {
+    return (
+      <ErrorState
+        status={errorStatus}
+        isRetrying={publishedViewQuery.isFetching}
+        onRetry={canRetry ? retry : undefined}
+      />
+    );
   }
 
   const { view, snapshot } = publishedViewQuery.data;
   const ownerTheme = getThemePreset(view.themeOverrideJson);
   const activeTheme = view.allowThemeSwitch
-    ? selectedTheme ?? ownerTheme
+    ? (selectedTheme ?? ownerTheme)
     : ownerTheme;
 
   return (
     <ViewerShell>
-      <SharedViewRender
-        allowThemeSwitch={view.allowThemeSwitch}
-        emptyTitle="Chưa có dữ liệu để hiển thị"
-        headers={snapshot?.headers ?? []}
-        intervalOptionsSeconds={INTERVAL_OPTIONS_SECONDS}
-        intervalSeconds={safeInterval}
-        isReloading={publishedViewQuery.isFetching}
-        onIntervalSecondsChange={(seconds) =>
-          setReloadIntervalSeconds(
-            Math.max(MIN_REFRESH_INTERVAL_SECONDS, Number(seconds) || 10),
-          )
-        }
-        onReload={() => {
-          void refetch();
-        }}
-        onReloadModeChange={setReloadMode}
-        onThemeChange={setSelectedTheme}
-        reloadMode={reloadMode}
-        remainingSeconds={remainingSeconds}
-        rowCount={snapshot?.rowCount ?? 0}
-        rows={snapshot?.rows ?? []}
-        themePreset={activeTheme}
-        title={view.name}
-        updatedAtLabel={formatDateTime(snapshot?.fetchedAt ?? view.lastPublishedAt)}
-      />
+      <div className={styles.view}>
+        {publishedViewQuery.isError ? (
+          <div
+            className={styles.refreshWarning}
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            <WarningIcon className="h-5 w-5 shrink-0" />
+            <p>Chưa thể tải dữ liệu mới. Đang hiển thị dữ liệu lần trước.</p>
+            <SharedButton
+              variant="outlined"
+              size="sm"
+              disabled={publishedViewQuery.isFetching}
+              aria-busy={publishedViewQuery.isFetching}
+              onClick={retry}
+            >
+              {publishedViewQuery.isFetching ? "Đang tải..." : "Thử lại"}
+            </SharedButton>
+          </div>
+        ) : null}
+        <SharedViewRender
+          allowThemeSwitch={view.allowThemeSwitch}
+          emptyTitle="Chưa có dữ liệu để hiển thị"
+          headers={snapshot?.headers ?? []}
+          intervalOptionsSeconds={INTERVAL_OPTIONS_SECONDS}
+          intervalSeconds={safeInterval}
+          isReloading={publishedViewQuery.isFetching}
+          onIntervalSecondsChange={(seconds) =>
+            setReloadIntervalSeconds(
+              Math.max(MIN_REFRESH_INTERVAL_SECONDS, Number(seconds) || 10),
+            )
+          }
+          onReload={() => {
+            void refetch();
+          }}
+          onReloadModeChange={setReloadMode}
+          onThemeChange={setSelectedTheme}
+          reloadMode={reloadMode}
+          remainingSeconds={remainingSeconds}
+          rowCount={snapshot?.rowCount ?? 0}
+          rows={snapshot?.rows ?? []}
+          themePreset={activeTheme}
+          title={view.name}
+          updatedAtLabel={formatDateTime(
+            snapshot?.fetchedAt ?? view.lastPublishedAt,
+          )}
+        />
+      </div>
     </ViewerShell>
   );
 }

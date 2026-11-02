@@ -159,6 +159,24 @@
   min-width: 0;
   border-radius: var(--ds-radius-panel);
 }
+.refreshWarning {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ds-space-3);
+  padding: var(--ds-space-3) var(--ds-space-4);
+  border: 1px solid var(--ds-line);
+  border-radius: var(--ds-radius-control);
+  background: var(--ds-warning-soft);
+  color: var(--ds-warning);
+  font-size: 13px;
+  line-height: 1.7;
+}
+.refreshWarning p {
+  min-width: 0;
+  flex: 1 1 240px;
+  overflow-wrap: anywhere;
+}
 .view[data-embedded] .headingRow {
   padding: 0;
   gap: var(--ds-space-4);

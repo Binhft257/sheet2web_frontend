@@ -1,5 +1,6 @@
 ﻿import { SharedButton } from "@/src/components/share";
 import { TableIcon } from "@/src/components/common/icons";
+import type { ReactNode } from "react";
 import ViewerTable from "@/src/components/viewer/viewer-table";
 import type { ThemePreset } from "@/src/types/view";
 import styles from "./published-view.module.css";
@@ -24,6 +25,10 @@ type SharedViewRenderProps = {
   remainingSeconds: number | null;
   onReload: () => void;
   isReloading?: boolean;
+  isReloadDisabled?: boolean;
+  reloadLabel?: string;
+  showReloadInAuto?: boolean;
+  children?: ReactNode;
   emptyTitle?: string;
   emptyDescription?: string;
   tableMaxHeightClassName?: string;
@@ -53,6 +58,10 @@ export default function SharedViewRender({
   remainingSeconds,
   onReload,
   isReloading = false,
+  isReloadDisabled = false,
+  reloadLabel = "Reload",
+  showReloadInAuto = false,
+  children,
   emptyTitle = "Chưa có dữ liệu để hiển thị",
   emptyDescription,
   tableMaxHeightClassName = "max-h-[calc(100vh-220px)]",
@@ -134,40 +143,43 @@ export default function SharedViewRender({
                   ))}
                 </select>
               </label>
-            ) : (
+            ) : null}
+            {reloadMode === "manual" || showReloadInAuto ? (
               <SharedButton
-                disabled={isReloading}
+                disabled={isReloading || isReloadDisabled}
+                aria-busy={isReloading}
                 onClick={onReload}
                 data-action="reload"
               >
-                {isReloading ? "Đang tải..." : "Reload"}
+                {isReloading ? "Đang tải..." : reloadLabel}
               </SharedButton>
-            )}
+            ) : null}
           </div>
           <p className={styles.refreshHint}>
             {reloadMode === "auto"
               ? `Tự động tải lại sau ${remainingSeconds ?? intervalSeconds} giây`
-              : "Thủ công: bấm Reload để cập nhật dữ liệu"}
+              : `Thủ công: bấm ${reloadLabel} để cập nhật dữ liệu`}
           </p>
         </div>
       </header>
-      {rows.length === 0 ? (
-        <div className={styles.empty}>
-          <span className={styles.stateIcon}>
-            <TableIcon />
-          </span>
-          <EmptyHeading>{emptyTitle}</EmptyHeading>
-          {emptyDescription ? <p>{emptyDescription}</p> : null}
-        </div>
-      ) : (
-        <ViewerTable
-          headers={headers}
-          rows={rows}
-          themePreset={themePreset}
-          tableMaxHeightClassName={tableMaxHeightClassName}
-          caption={title}
-        />
-      )}
+      {children ??
+        (rows.length === 0 ? (
+          <div className={styles.empty}>
+            <span className={styles.stateIcon}>
+              <TableIcon />
+            </span>
+            <EmptyHeading>{emptyTitle}</EmptyHeading>
+            {emptyDescription ? <p>{emptyDescription}</p> : null}
+          </div>
+        ) : (
+          <ViewerTable
+            headers={headers}
+            rows={rows}
+            themePreset={themePreset}
+            tableMaxHeightClassName={tableMaxHeightClassName}
+            caption={title}
+          />
+        ))}
     </div>
   );
 }

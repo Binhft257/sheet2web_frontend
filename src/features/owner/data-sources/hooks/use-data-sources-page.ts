@@ -1,7 +1,9 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import useConfirmDialog from "@/src/hooks/use-confirm-dialog";
+import { getDataSourceUrl } from "../data-source-utils";
 import {
   useCreateDataSource,
   useDataSources,
@@ -23,6 +25,9 @@ type ModalState =
 
 export default function useDataSourcesPage() {
   const queryClient = useQueryClient();
+  const confirmation = useConfirmDialog();
+  const syncLock = useRef(false);
+  const [syncingId, setSyncingId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<DataSourceStatusFilter | "">(
@@ -40,6 +45,7 @@ export default function useDataSourcesPage() {
   });
   const createDataSourceMutation = useCreateDataSource();
   const updateDataSourceMutation = useUpdateDataSource();
+  const syncDataSourceMutation = useUpdateDataSource();
   const deleteDataSourceMutation = useDeleteDataSource();
   const dataSources = dataSourcesQuery.data?.items ?? [];
   const paginationMeta = dataSourcesQuery.data?.meta ?? {
@@ -81,8 +87,56 @@ export default function useDataSourcesPage() {
     setModalState({ mode: "edit", dataSource });
   }
 
-  async function refreshDataSources() {
-    await queryClient.invalidateQueries({ queryKey: ["data-sources"] });
+  async function refreshDataSources(dataSourceId?: string) {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["data-sources"] }),
+      ...(dataSourceId
+        ? [
+            queryClient.invalidateQueries({
+              queryKey: ["data-source-sheets", dataSourceId],
+            }),
+            // Tab renames/removals also affect existing view details and lists.
+            queryClient.invalidateQueries({ queryKey: ["views"] }),
+          ]
+        : []),
+    ]);
+  }
+
+  function requestSyncDataSource(dataSource: DataSource) {
+    if (syncLock.current || upsertPending || deletingId) return;
+    confirmation.requestConfirmation({
+      title: "Đồng bộ danh sách sheet",
+      message: `Lấy lại danh sách tab hiện tại từ Google Sheets cho nguồn “${dataSource.title}”. Nếu bạn đã xóa tab trên Google Sheets, trang dữ liệu gắn với tab đó cũng sẽ bị xóa khi đồng bộ.`,
+      confirmLabel: "Đồng bộ sheet",
+      pendingLabel: "Đang đồng bộ...",
+      errorMessage:
+        "Không thể đồng bộ danh sách sheet. Kiểm tra quyền truy cập Google Sheets và thử lại.",
+      onConfirm: async () => {
+        if (syncLock.current) return;
+        const sourceUrl = getDataSourceUrl(dataSource);
+        if (!sourceUrl) {
+          throw new Error(
+            "Nguồn chưa có link Google Sheets. Chọn Sửa để bổ sung link trước khi đồng bộ.",
+          );
+        }
+        syncLock.current = true;
+        setSyncingId(dataSource.id);
+        try {
+          // Re-submit the stored URL to refresh metadata without renaming the source.
+          await syncDataSourceMutation.mutateAsync({
+            id: dataSource.id,
+            body: { sourceUrl },
+          });
+          await refreshDataSources(dataSource.id);
+          setToastMessage(
+            `Đã đồng bộ danh sách sheet của “${dataSource.title}”.`,
+          );
+        } finally {
+          syncLock.current = false;
+          setSyncingId(null);
+        }
+      },
+    });
   }
 
   async function handleUpsertDataSource(
@@ -105,7 +159,7 @@ export default function useDataSourcesPage() {
       });
       setModalState(null);
       setToastMessage("Cập nhật nguồn thành công");
-      await refreshDataSources();
+      await refreshDataSources(modalState.dataSource.id);
     }
   }
 
@@ -118,6 +172,7 @@ export default function useDataSourcesPage() {
   }
 
   return {
+    confirmationProps: confirmation.dialogProps,
     search,
     statusFilter,
     modalState,
@@ -130,12 +185,14 @@ export default function useDataSourcesPage() {
     upsertPending,
     updatingId,
     deletingId,
+    syncingId,
     handleSearchChange,
     handleStatusFilterChange,
     openCreateModal,
     openEditModal,
     handleUpsertDataSource,
     handleDeleteDataSource,
+    requestSyncDataSource,
     changePage: setPage,
     openDeleteModal: setDeleteTarget,
     closeUpsertModal: () => setModalState(null),

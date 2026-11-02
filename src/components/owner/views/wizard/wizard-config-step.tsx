@@ -14,9 +14,7 @@ export default function WizardConfigStep({
         <ViewForm
           errors={wizard.formErrors}
           isLoadingSheets={wizard.isLoadingSheets}
-          isPreviewing={wizard.isPreviewing}
           onChange={wizard.changeForm}
-          onPreview={wizard.handlePreview}
           onRetrySheets={wizard.retrySheets}
           sheets={wizard.sheets}
           sheetsErrorMessage={wizard.sheetsError}
@@ -30,6 +28,7 @@ export default function WizardConfigStep({
             errorMessage={wizard.previewError}
             intervalSeconds={wizard.previewIntervalSeconds}
             isLoading={wizard.isPreviewing}
+            isReloadDisabled={wizard.isLoadingSheets}
             onIntervalSecondsChange={wizard.changePreviewInterval}
             onReload={wizard.handlePreview}
             onReloadModeChange={wizard.setPreviewReloadMode}

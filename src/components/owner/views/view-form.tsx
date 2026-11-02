@@ -19,9 +19,7 @@ type ViewFormProps = {
   isLoadingSheets?: boolean;
   sheetsErrorMessage?: string | null;
   onChange: (values: ViewDraftFormValues) => void;
-  onPreview: () => void;
   onRetrySheets: () => void;
-  isPreviewing?: boolean;
 };
 function getSheetName(sheet: DataSourceSheet, index: number) {
   return sheet.sheetName || sheet.title || `Sheet ${index + 1}`;
@@ -34,9 +32,7 @@ export default function ViewForm({
   isLoadingSheets = false,
   sheetsErrorMessage = null,
   onChange,
-  onPreview,
   onRetrySheets,
-  isPreviewing = false,
 }: ViewFormProps) {
   const formRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -62,7 +58,7 @@ export default function ViewForm({
         <div className="ui-wizard-panel-body space-y-5">
           <div>
             <label className="ui-field-label" htmlFor="view-name">
-              Tên view
+              Tên trang dữ liệu
             </label>
             <input
               aria-invalid={Boolean(errors.name)}
@@ -141,7 +137,7 @@ export default function ViewForm({
                 {
                   value: "range",
                   label: "Vùng dữ liệu",
-                  hint: "Chọn range A1",
+                  hint: "Chọn vùng theo ký hiệu A1",
                 },
               ].map((option) => (
                 <label
@@ -174,7 +170,7 @@ export default function ViewForm({
           {values.selectionType === "range" ? (
             <div>
               <label className="ui-field-label" htmlFor="range-a1">
-                Range A1
+                Vùng dữ liệu (A1)
               </label>
               <input
                 aria-invalid={Boolean(errors.rangeA1Notation)}
@@ -206,16 +202,8 @@ export default function ViewForm({
               }
               type="checkbox"
             />
-            <span>Dùng dòng đầu làm header</span>
+            <span>Dùng hàng đầu làm tiêu đề</span>
           </label>
-          <SharedButton
-            className="w-full"
-            variant="outlined"
-            disabled={isPreviewing || isLoadingSheets}
-            onClick={onPreview}
-          >
-            {isPreviewing ? "Đang tải dữ liệu..." : "Preview"}
-          </SharedButton>
         </div>
       </section>
       <section className="ui-panel">

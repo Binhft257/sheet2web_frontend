@@ -59,6 +59,7 @@ import {
 import { appPath, replaceAppPath } from "@/src/lib/app-path";
 import { viewDetailPath } from "@/src/features/owner/views/view-navigation";
 import usePreviewRefresh from "@/src/features/owner/views/hooks/use-preview-refresh";
+import useWizardProgress from "./use-wizard-progress";
 
 export default function useViewWizard({
   initialStep = 1,
@@ -68,11 +69,15 @@ export default function useViewWizard({
 }: CreateViewWizardProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const progress = useWizardProgress(initialViewId, !initialCompleted);
+  const [isWizardReady, setIsWizardReady] = useState(false);
   const publishLock = useRef(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [completedPublication, setCompletedPublication] =
     useState<ViewPublication | null>(null);
-  const [isEditingExistingView] = useState(Boolean(initialViewId));
+  const [isEditingExistingView, setIsEditingExistingView] = useState(
+    Boolean(initialViewId),
+  );
   const [currentStep, setCurrentStep] = useState<WizardStep>(initialStep);
   const [viewId, setViewId] = useState<string | null>(initialViewId);
   const [selectedDataSourceId, setSelectedDataSourceId] = useState("");
@@ -141,10 +146,47 @@ export default function useViewWizard({
           accessMode: viewQuery.data.accessMode,
         }
       : null);
+  const hasPublication = Boolean(publication);
+
+  useEffect(() => {
+    if (!progress.isReady || isWizardReady) return;
+    const stored = progress.snapshot;
+    if (stored) {
+      setSelectedDataSourceId(stored.selectedDataSourceId);
+      setHydratedSource(stored.source);
+      setFormValues(stored.formValues);
+      setAccessMode(stored.accessMode);
+      setPreviewReloadMode(stored.previewReloadMode);
+      setPreviewIntervalSeconds(stored.previewIntervalSeconds);
+      setHydratedViewId(stored.viewId);
+      setIsEditingExistingView(stored.isEditingExistingView);
+    }
+    if (!initialViewId && initialStep > 1 && !stored?.selectedDataSourceId) {
+      setCurrentStep(1);
+      replaceWizardUrl(null, 1);
+      setToastMessage({
+        type: "error",
+        message:
+          "Không còn cấu hình trong phiên này. Vui lòng chọn nguồn dữ liệu để tiếp tục.",
+      });
+    }
+    setIsWizardReady(true);
+  }, [
+    progress.isReady,
+    progress.snapshot,
+    isWizardReady,
+    initialStep,
+    initialViewId,
+  ]);
 
   useEffect(() => {
     const view = viewQuery.data;
-    if (!view || hydratedViewId === view.id) {
+    if (!isWizardReady || !view) return;
+    setPublishedSlug(view.status === "published" ? view.slug : null);
+    setPublishedUrl(
+      view.status === "published" ? appPath(`/v/${view.slug}`) : null,
+    );
+    if (hydratedViewId === view.id) {
       return;
     }
 
@@ -160,14 +202,44 @@ export default function useViewWizard({
       themePreset: getThemePreset(view.themeOverrideJson),
     });
     setAccessMode(view.accessMode === "private" ? "private" : "public");
-    setPublishedSlug(view.status === "published" ? view.slug : null);
-    setPublishedUrl(
-      view.status === "published" ? appPath(`/v/${view.slug}`) : null,
-    );
-  }, [hydratedViewId, viewQuery.data]);
+  }, [isWizardReady, hydratedViewId, viewQuery.data]);
+
+  const saveProgress = progress.save;
+  useEffect(() => {
+    if (
+      !isWizardReady ||
+      hasPublication ||
+      (viewId && hydratedViewId !== viewId)
+    )
+      return;
+    saveProgress({
+      version: 1,
+      viewId,
+      isEditingExistingView,
+      selectedDataSourceId,
+      source: selectedDataSource,
+      formValues,
+      accessMode,
+      previewReloadMode,
+      previewIntervalSeconds,
+    });
+  }, [
+    isWizardReady,
+    hasPublication,
+    viewId,
+    hydratedViewId,
+    isEditingExistingView,
+    selectedDataSourceId,
+    selectedDataSource,
+    formValues,
+    accessMode,
+    previewReloadMode,
+    previewIntervalSeconds,
+    saveProgress,
+  ]);
 
   useEffect(() => {
-    if (!sheets.length || formValues.sourceSheetId) {
+    if (!isWizardReady || !sheets.length || formValues.sourceSheetId) {
       return;
     }
 
@@ -181,7 +253,7 @@ export default function useViewWizard({
       ...previous,
       sourceSheetId: firstVisibleSheet.id,
     }));
-  }, [formValues.sourceSheetId, sheets]);
+  }, [isWizardReady, formValues.sourceSheetId, sheets]);
 
   const viewUrlLabel = useMemo(() => {
     if (publishedUrl) {
@@ -284,7 +356,7 @@ export default function useViewWizard({
       }));
       setToastMessage({
         type: "error",
-        message: "Vui lòng kiểm tra cấu hình preview.",
+        message: "Vui lòng kiểm tra cấu hình xem trước.",
       });
       return;
     }
@@ -302,14 +374,14 @@ export default function useViewWizard({
       });
       setPreview(result);
     } catch (error) {
-      const message = getErrorMessage(error, "Không thể preview dữ liệu.");
+      const message = getErrorMessage(error, "Không thể tải bản xem trước.");
       setPreviewError(message);
       setToastMessage({ type: "error", message });
     }
   }, [formValues, previewDataSource, selectedDataSourceId, viewId]);
 
   const previewRemainingSeconds = usePreviewRefresh({
-    currentStep,
+    currentStep: isWizardReady ? currentStep : 1,
     previewReloadMode,
     previewIntervalSeconds,
     handlePreview,
@@ -430,6 +502,7 @@ export default function useViewWizard({
       setPublishedSlug(publishResult.slug);
       await queryClient.invalidateQueries({ queryKey: ["views"] });
       if (isEditingExistingView) {
+        progress.clear();
         replaceAppPath(router, viewDetailPath(activeViewId, returnTo, true));
       } else {
         setCompletedPublication({
@@ -440,6 +513,7 @@ export default function useViewWizard({
           accessMode,
         });
         setToastMessage(null);
+        progress.clear();
         replaceWizardUrl(activeViewId, 3, true);
       }
       didComplete = true;
@@ -497,7 +571,7 @@ export default function useViewWizard({
         )
       : null,
     retrySources: () => dataSourcesQuery.refetch(),
-    isHydrating: viewQuery.isPending && Boolean(viewId),
+    isHydrating: !isWizardReady || (viewQuery.isPending && Boolean(viewId)),
     hydrationError:
       viewQuery.isError && viewId
         ? getErrorMessage(viewQuery.error, "Không thể tải bản nháp view.")
@@ -505,7 +579,7 @@ export default function useViewWizard({
     retryView: () => viewQuery.refetch(),
     sheets,
     selectedSheetName,
-    isLoadingSheets: sheetsQuery.isPending,
+    isLoadingSheets: sheetsQuery.isLoading,
     sheetsError: sheetsQuery.isError
       ? getErrorMessage(sheetsQuery.error, "Không thể tải danh sách sheet.")
       : null,
@@ -539,7 +613,7 @@ export default function useViewWizard({
     isPublishPending: isPublishing,
     isPublishDisabled:
       isPublishing ||
-      Boolean(publication) ||
+      hasPublication ||
       createViewMutation.isPending ||
       publishViewMutation.isPending ||
       updateViewMutation.isPending ||
@@ -548,6 +622,7 @@ export default function useViewWizard({
     viewUrlLabel,
     toastMessage,
     showToast,
+    clearProgress: progress.clear,
     dismissToast: () => setToastMessage(null),
     addModalOpen,
     openAddModal: () => setAddModalOpen(true),
